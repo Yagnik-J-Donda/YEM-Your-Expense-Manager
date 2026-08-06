@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recycle Bin | YEM</title>
+  <link rel="stylesheet" href="style.css?v=20260806-multi-projections" />
+</head>
+<body class="recycle-bin-body">
+  <main class="recycle-bin-page">
+    <header class="recycle-bin-header">
+      <div>
+        <p class="category-page-label">YEM</p>
+        <h1>🗑️ Recycle Bin</h1>
+        <p>Review and restore deleted categories and expense entries.</p>
+      </div>
+      <a href="index.html" class="back-home-button">← Back to Home</a>
+    </header>
+
+    <nav class="recycle-bin-tabs" aria-label="Recycle Bin sections">
+      <button class="recycle-tab active" id="deleted-categories-tab" type="button"
+        role="tab" aria-selected="true" aria-controls="deleted-categories-panel">
+        🗂️ Deleted Categories
+      </button>
+      <button class="recycle-tab" id="deleted-entries-tab" type="button"
+        role="tab" aria-selected="false" aria-controls="deleted-entries-panel">
+        💵 Deleted Entries
+      </button>
+    </nav>
+
+    <section class="recycle-bin-panel" id="deleted-categories-panel" role="tabpanel"
+      aria-labelledby="deleted-categories-tab">
+      <h2>Deleted Categories</h2>
+      <div id="deleted-categories-list" class="recycle-list"></div>
+    </section>
+
+    <section class="recycle-bin-panel" id="deleted-entries-panel" role="tabpanel"
+      aria-labelledby="deleted-entries-tab" hidden>
+      <h2>Deleted Entries by Category</h2>
+      <div id="deleted-entries-list"></div>
+    </section>
+
+    <p id="recycle-status" class="recycle-status" aria-live="polite"></p>
+  </main>
+  <script src="recycle-bin.js?v=20260806-multi-projections"></script>
+</body>
+</html>

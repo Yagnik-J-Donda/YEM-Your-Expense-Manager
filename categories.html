@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Manage Categories | YEM</title>
+
+  <link rel="stylesheet" href="style.css?v=20260806-personal-category-suggestions" />
+</head>
+
+<body class="categories-body">
+  <div class="wrapper">
+    <main class="category-management-page">
+      <div class="category-page-container">
+
+        <header class="category-page-header">
+          <div>
+            <p class="category-page-label">YEM</p>
+            <h1>Manage Categories</h1>
+            <p>
+              Add, edit, organize, and manage your expense categories and
+              monthly budget limits.
+            </p>
+          </div>
+
+          <a href="index.html" class="back-home-button">
+            ← Back to Home
+          </a>
+        </header>
+
+        <section class="category-form-section category-checker-section">
+          <div class="section-heading">
+            <div>
+              <h2>Item Category Checker</h2>
+              <p>Check an item against your categories, previous choices and the offline reference catalogue.</p>
+            </div>
+          </div>
+          <div class="category-checker-controls">
+            <input type="search" id="category-checker-input" placeholder="For example: toothpaste, Netflix or fuel" />
+            <button type="button" id="run-category-checker" class="save-category-button">Check Category</button>
+            <button type="button" id="browse-category-catalogue" class="secondary-category-button">Browse Default Catalogue</button>
+            <button type="button" id="manage-category-preferences" class="secondary-category-button">Manage Saved Preferences</button>
+          </div>
+          <div id="category-checker-results" class="category-suggestion-results" aria-live="polite"></div>
+          <div id="category-catalogue-list" class="category-catalogue-list" hidden></div>
+          <div id="category-preference-list" class="category-suggestion-results" hidden></div>
+        </section>
+
+        <section class="category-form-section">
+          <div class="section-heading">
+            <div>
+              <h2>Add a New Category</h2>
+              <p>Create a fixed or variable expense category.</p>
+            </div>
+          </div>
+
+          <form id="category-form" class="category-management-form">
+            <div class="category-form-group">
+              <label for="new-type-name">Category Name *</label>
+
+              <input
+                type="text"
+                id="new-type-name"
+                placeholder="For example: Groceries"
+                autocomplete="off"
+                required
+              />
+            </div>
+
+            <div class="category-form-group">
+              <label for="new-type-kind">Category Type *</label>
+
+              <select id="new-type-kind" required>
+                <option value="Variable">Variable</option>
+                <option value="Fixed">Fixed</option>
+              </select>
+            </div>
+
+            <div class="category-form-group">
+              <label for="new-calculation-mode">Budget Calculation *</label>
+              <select id="new-calculation-mode" required>
+                <option value="allowance">Monthly Allowance</option>
+                <option value="projections">Sum of Projections</option>
+              </select>
+            </div>
+
+            <label class="unlimited-category-option schedule-variable-option new-projection-only" hidden>
+              <input type="checkbox" id="new-schedule-variable" checked />
+              <span>Variable schedule (no fixed monthly day)</span>
+            </label>
+
+            <div class="category-form-group new-projection-only" hidden>
+              <label for="new-scheduled-day">Scheduled Day *</label>
+              <select id="new-scheduled-day" disabled>
+                <option value="">Select day of month</option>
+                <option value="last">Last day of the month</option>
+              </select>
+            </div>
+
+            <div class="category-form-group" id="new-allowance-group">
+              <label for="new-type-limit" id="new-amount-label">Monthly Allowance ($) *</label>
+
+              <input
+                type="number"
+                id="new-type-limit"
+                placeholder="For example: 500"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div class="category-form-group new-projection-only" hidden>
+              <label for="new-projection-name">Projected Expense Name *</label>
+              <input type="text" id="new-projection-name" placeholder="For example: Weekly groceries" required />
+            </div>
+
+            <div class="category-form-group new-projection-only" hidden>
+              <label for="new-projection-notes">Projection Notes</label>
+              <input type="text" id="new-projection-notes" placeholder="Optional calculation notes" />
+            </div>
+
+            <label class="unlimited-category-option">
+              <input type="checkbox" id="new-category-unlimited" checked />
+              <span>Keep this allowance/projection active without a time limit</span>
+            </label>
+
+            <div class="category-form-group">
+              <label for="new-category-start">Plan Active From</label>
+              <input type="date" id="new-category-start" disabled />
+            </div>
+
+            <div class="category-form-group">
+              <label for="new-category-end">Plan Active Until</label>
+              <input type="date" id="new-category-end" disabled />
+            </div>
+
+            <button type="submit" class="add-category-button">
+              ➕ Add Category
+            </button>
+          </form>
+        </section>
+
+        <section class="category-list-section">
+          <div class="section-heading">
+            <div>
+              <h2>Your Categories</h2>
+              <p>Select a category to edit its name or budget limit.</p>
+            </div>
+
+            <div class="category-search-wrapper">
+              <label for="category-search" class="sr-only">
+                Search categories
+              </label>
+
+              <input
+                type="search"
+                id="category-search"
+                placeholder="Search categories..."
+              />
+
+              <label for="category-kind-filter" class="sr-only">Filter category type</label>
+              <select id="category-kind-filter" aria-label="Filter category type">
+                <option value="all">All Categories</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Variable">Variable</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="category-management-list" class="category-management-grid">
+            <!-- JavaScript will display categories here -->
+          </div>
+
+          <div
+            id="category-empty-state"
+            class="category-empty-state"
+            hidden
+          >
+            <div class="category-empty-icon">🗂️</div>
+            <h3>No categories found</h3>
+            <p>Add your first category using the form above.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      © 2025 <strong>YEM – Your Expense Manager</strong>. All rights reserved.
+      <br />
+      Crafted with ❤️ to simplify your personal finances.
+    </footer>
+  </div>
+
+  <!-- Edit Category Modal -->
+  <div id="category-modal-overlay" class="category-modal-overlay"></div>
+
+  <div id="edit-category-modal" class="category-modal">
+    <div class="category-modal-header">
+      <div>
+        <p class="category-page-label">Category Settings</p>
+        <h3>Edit Category</h3>
+      </div>
+
+      <button
+        type="button"
+        class="category-modal-close"
+        onclick="closeCategoryEditModal()"
+        aria-label="Close edit category window"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="edit-category-form">
+      <div class="category-form-group">
+        <label for="edit-type-name">Category Name</label>
+
+        <input
+          type="text"
+          id="edit-type-name"
+          required
+        />
+      </div>
+
+      <div class="category-form-group">
+        <label for="edit-type-limit">Monthly Allowance ($)</label>
+
+        <input
+          type="number"
+          id="edit-type-limit"
+          min="0"
+          step="0.01"
+          required
+        />
+      </div>
+
+      <div class="category-form-group">
+        <label for="edit-type-kind">Category Type</label>
+        <select id="edit-type-kind">
+          <option value="Variable">Variable</option>
+          <option value="Fixed">Fixed</option>
+        </select>
+      </div>
+
+      <div class="category-form-group">
+        <label for="edit-calculation-mode">Budget Calculation</label>
+        <select id="edit-calculation-mode">
+          <option value="allowance">Monthly Allowance</option>
+          <option value="projections">Sum of Projections</option>
+        </select>
+      </div>
+
+      <section id="edit-projections-section" class="projection-editor-section" hidden>
+        <div class="projection-editor-heading">
+          <div>
+            <h4>Projected Expenses</h4>
+            <p>Each projection has its own amount, schedule and active period.</p>
+          </div>
+          <button type="button" id="add-projection-row" class="secondary-category-button">＋ Add Projection</button>
+        </div>
+        <div id="edit-projection-list" class="projection-editor-list"></div>
+      </section>
+
+      <div id="edit-allowance-duration">
+      <label class="unlimited-category-option">
+        <input type="checkbox" id="edit-category-unlimited" />
+        <span>Keep this allowance active without a time limit</span>
+      </label>
+
+      <div class="duration-input-grid">
+        <label for="edit-category-start">Allowance Active From
+          <input type="date" id="edit-category-start" />
+        </label>
+        <label for="edit-category-end">Allowance Active Until
+          <input type="date" id="edit-category-end" />
+        </label>
+      </div>
+      </div>
+
+      <div class="category-modal-actions">
+        <button
+          type="button"
+          class="delete-category-button"
+          onclick="deleteCategory()"
+        >
+          🗑️ Delete
+        </button>
+
+        <div class="category-modal-action-group">
+          <button
+            type="button"
+            class="secondary-category-button"
+            onclick="closeCategoryEditModal()"
+          >
+            Cancel
+          </button>
+
+          <button type="submit" class="save-category-button">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Confirm Add Category Modal -->
+  <div id="confirm-add-type-modal" class="category-confirm-modal">
+    <h3>Confirm New Category</h3>
+
+    <p id="confirm-type-details"></p>
+
+    <div class="category-confirm-actions">
+      <button
+        type="button"
+        class="secondary-category-button"
+        onclick="closeConfirmAddTypeModal()"
+      >
+        Edit Again
+      </button>
+
+      <button
+        type="button"
+        id="confirm-add-type-btn"
+        class="save-category-button"
+      >
+        Yes, Add Category
+      </button>
+    </div>
+  </div>
+
+  
+
+  <!-- <script src="script.js"></script> -->
+  <script src="categories.js?v=20260806-multi-projections"></script>
+  <script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
+</body>
+</html>
