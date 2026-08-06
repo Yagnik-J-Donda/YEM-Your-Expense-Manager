@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css?v=20260806-personal-category-suggestions" />
+  <link rel="stylesheet" href="style.css?v=20260806-main-card-layout" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="main-body">
 
 <div class="wrapper">
 
@@ -55,9 +55,12 @@
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
 
   <div class="container">
-    <h1>YEM</h1>
-    <h2>(Your Expense Manager) </h2>
+    <header class="main-page-header">
+      <h1>YEM</h1>
+      <h2>(Your Expense Manager)</h2>
+    </header>
     
+<section class="main-section-card main-entry-card">
 <form id="expense-form">
   <!-- 💲 Amount -->
   <label for="amount">Enter Amount *</label>
@@ -109,6 +112,7 @@
     <button type="button" onclick="redoLastEntry()">Redo Last Entry</button>
   </div>
 </form>
+</section>
 
 
 <!-- this one has gone to the saperate category page -->
@@ -126,6 +130,7 @@
       <button type="submit" style="padding: 5px 10px;">➕ Add Type</button>
     </form> -->
 
+    <section class="main-section-card">
     <h2>Remaining Budget</h2>
 
     <div id="month-year-toggle">
@@ -181,6 +186,7 @@
 
     <!-- 🔵 Total Summary (Separate from Table but within Budget Section) -->
     <div id="total-summary" class="total-summary-box"></div>
+    </section>
 
     <!-- <div style="text-align: center; margin-top: 15px;">
       <button onclick="showPastBudgetSnapshots()" style="font-weight: bold;">📁 View Past Budget Summaries</button>
@@ -188,6 +194,7 @@
 
     <div id="snapshot-view"></div> -->
 
+    <section class="main-section-card main-history-card">
     <hr class="section-divider" />
     <div class="history-heading-row">
       <h2>History</h2>
@@ -214,6 +221,7 @@
     </table>
   </div>
 </div>
+    </section>
 
   </div>
 
