@@ -231,6 +231,29 @@ form button:hover {
   background-color: #0056b3;
 }
 
+/* Keep native date controls inside the main card, especially in mobile Safari. */
+#expense-form {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+#expense-form > *,
+#expense-form input,
+#expense-form select,
+#expense-form textarea {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#expense-form input[type="date"],
+#expense-form input[type="datetime-local"] {
+  display: block;
+  width: 100%;
+  min-inline-size: 0;
+}
+
 /* ==== Action Buttons ==== */
 .action-buttons {
   display: flex;
@@ -2076,6 +2099,7 @@ th:nth-child(4) {
 
 .duration-input-grid label {
   display: grid;
+  min-width: 0;
   gap: 6px;
   font-weight: 600;
 }
