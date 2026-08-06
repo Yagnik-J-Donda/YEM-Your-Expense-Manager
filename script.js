@@ -152,6 +152,27 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     return;
   }
 
+  const scheduleExpense = document.getElementById("schedule-expense").checked;
+  if (scheduleExpense) {
+    if (typeof window.yemCreateScheduledPayment !== "function") {
+      alert("The scheduled-payment feature could not be loaded. Please refresh and try again.");
+      return;
+    }
+    window.yemCreateScheduledPayment({
+      date,
+      category,
+      amount,
+      details,
+      transactionType,
+      activeStart,
+      activeEnd
+    });
+    e.target.reset();
+    setCurrentDateTime();
+    document.activeElement.blur();
+    return;
+  }
+
   expenses.push({
     date,
     category,
@@ -1321,7 +1342,11 @@ function exportData() {
   const fullData = {
     expenses,
     categoryLimits,
-    categoryKinds
+    categoryKinds,
+    scheduledPayments: JSON.parse(localStorage.getItem("scheduledPayments") || "[]"),
+    scheduledOccurrences: JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}"),
+    scheduledNotifications: JSON.parse(localStorage.getItem("scheduledNotifications") || "[]"),
+    dismissedScheduledNotifications: JSON.parse(localStorage.getItem("dismissedScheduledNotifications") || "[]")
   };
 
   const data = new Blob([JSON.stringify(fullData, null, 2)], { type: "application/json" });
@@ -1380,6 +1405,21 @@ function importData(event) {
         const current = JSON.parse(localStorage.getItem(key) || "{}");
         localStorage.setItem(key, JSON.stringify({ ...current, ...imported[key] }));
       });
+
+      ["scheduledPayments", "scheduledNotifications", "dismissedScheduledNotifications"].forEach(key => {
+        if (!Array.isArray(imported[key])) return;
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const merged = [...current];
+        imported[key].forEach(item => {
+          const identity = typeof item === "string" ? item : item.id;
+          if (!merged.some(existingItem => (typeof existingItem === "string" ? existingItem : existingItem.id) === identity)) merged.push(item);
+        });
+        localStorage.setItem(key, JSON.stringify(merged));
+      });
+      if (imported.scheduledOccurrences && typeof imported.scheduledOccurrences === "object") {
+        const current = JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}");
+        localStorage.setItem("scheduledOccurrences", JSON.stringify({ ...current, ...imported.scheduledOccurrences }));
+      }
 
       localStorage.setItem("expenses", JSON.stringify(expenses));
       localStorage.setItem("categoryLimits", JSON.stringify(categoryLimits));
@@ -1928,7 +1968,7 @@ if (editCategoryForm) {
 // 🚀 Press Enter to Apply + Close Modal
 document.addEventListener("keydown", function (event) {
   const modal = document.getElementById("edit-category-modal");
-  if (modal.style.display === "block" && event.key === "Enter") {
+  if (modal && modal.style.display === "block" && event.key === "Enter") {
     event.preventDefault(); // Prevent form submission
     applyCategoryEdit();
   }

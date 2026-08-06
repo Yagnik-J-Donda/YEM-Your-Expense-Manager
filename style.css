@@ -2635,3 +2635,47 @@ th:nth-child(4) {
     width: 100%;
   }
 }
+
+.notification-center-button {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, .12);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notification-center-button.has-notifications { border-color: #f79009; background: #fffaeb; }
+.notification-count { min-width: 21px; padding: 2px 6px; border-radius: 999px; background: #d92d20; color: #fff; font-size: .78rem; }
+.scheduled-expense-option { display: flex; align-items: flex-start; gap: 9px; margin: 12px 0 4px; font-weight: 700; }
+.scheduled-expense-option input { width: auto !important; margin-top: 3px; }
+.notification-center-modal { max-width: 720px; }
+.notification-intro { margin: 4px 0 0; color: #667085; }
+.notification-list { display: grid; gap: 12px; max-height: 60vh; overflow: auto; }
+.notification-card { padding: 16px; border: 1px solid #e4e7ec; border-left: 5px solid #f79009; border-radius: 12px; background: #fff; }
+.notification-card h3 { margin: 0 0 7px; }
+.notification-card p { margin: 4px 0; color: #475467; }
+.notification-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.notification-actions button { width: auto; margin: 0; padding: 9px 13px; }
+.notification-actions .danger-notification-action { background: #fee4e2; color: #b42318; }
+.notification-actions .secondary-notification-action { background: #f2f4f7; color: #344054; }
+.notification-empty { padding: 35px 15px; text-align: center; color: #667085; }
+.scheduled-approval-form { display: grid; gap: 12px; }
+.scheduled-approval-form label { display: grid; gap: 5px; font-weight: 700; }
+.scheduled-approval-form input, .scheduled-approval-form textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d0d5dd; border-radius: 8px; }
+.approval-summary { padding: 11px; border-radius: 8px; background: #f2f4f7; }
+
+@media (max-width: 640px) {
+  .notification-center-button span:nth-child(2) { display: none; }
+  .notification-actions { flex-direction: column; }
+  .notification-actions button { width: 100%; }
+}

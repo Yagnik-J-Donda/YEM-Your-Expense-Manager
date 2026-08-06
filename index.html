@@ -16,6 +16,12 @@
 <!-- <button id="menu-toggle" style="position: fixed; top: 10px; left: 10px; z-index: 1100; border: none; font-size: 24px; cursor: pointer; padding: 6px 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(253, 251, 251, 0.2);">☰</button> -->
 <button id="menu-toggle">☰</button>
 
+<button type="button" id="notification-center-button" class="notification-center-button" aria-label="Open notification center">
+  <span aria-hidden="true">🔔</span>
+  <span>Notifications</span>
+  <span id="notification-count" class="notification-count" hidden>0</span>
+</button>
+
 
 
 <!-- 🔲 Sidebar Navigation -->
@@ -88,7 +94,11 @@
       <input type="date" id="expense-end-date" />
     </label>
   </div>
-  <p class="field-help">Leave both duration fields empty for a one-time entry on the selected date.</p>
+  <label class="scheduled-expense-option">
+    <input type="checkbox" id="schedule-expense" />
+    <span>Schedule this expense monthly and require approval before posting</span>
+  </label>
+  <p class="field-help" id="expense-duration-help">Leave both duration fields empty for a one-time entry. For a scheduled expense, the selected date sets its monthly due day and the duration controls when the schedule is active.</p>
 
   <!-- ➕ Submit Button -->
   <button type="submit">Add Expense</button>
@@ -427,6 +437,46 @@
   <div id="projection-breakdown-content" class="feature-results"></div>
 </section>
 
+<section id="notification-center-modal" class="feature-modal notification-center-modal" role="dialog" aria-modal="true"
+  aria-labelledby="notification-center-title" hidden>
+  <div class="feature-modal-header">
+    <div>
+      <h2 id="notification-center-title">🔔 Notification Center</h2>
+      <p class="notification-intro">Scheduled expenses are never posted until you approve them.</p>
+    </div>
+    <button type="button" data-close-feature-modal aria-label="Close notifications">×</button>
+  </div>
+  <div id="notification-center-list" class="notification-list"></div>
+</section>
+
+<section id="scheduled-approval-modal" class="feature-modal scheduled-approval-modal" role="dialog" aria-modal="true"
+  aria-labelledby="scheduled-approval-title" hidden>
+  <div class="feature-modal-header">
+    <h2 id="scheduled-approval-title">Confirm Scheduled Expense</h2>
+    <button type="button" data-close-feature-modal aria-label="Close confirmation">×</button>
+  </div>
+  <p id="scheduled-approval-summary" class="approval-summary"></p>
+  <form id="scheduled-approval-form" class="scheduled-approval-form">
+    <input type="hidden" id="approval-occurrence-id" />
+    <label>Actual deduction date *
+      <input type="date" id="approval-actual-date" required />
+    </label>
+    <label>Actual amount *
+      <input type="number" id="approval-actual-amount" min="0.01" step="0.01" required />
+    </label>
+    <label>Statement description or reference
+      <input type="text" id="approval-statement-description" placeholder="Optional statement text" />
+    </label>
+    <label>Notes
+      <textarea id="approval-notes" rows="3" placeholder="Optional notes"></textarea>
+    </label>
+    <div class="notification-actions">
+      <button type="button" id="approval-not-deducted" class="secondary-notification-action">Not deducted yet</button>
+      <button type="submit">Approve and post</button>
+    </div>
+  </form>
+</section>
+
 
 </div>
   <footer class="footer">
@@ -470,6 +520,7 @@ scrollToTopBtn.addEventListener("click", () => {
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
 <script src="script.js?v=20260806-multi-projections"></script>
 <script src="enhancements.js?v=20260806-multi-projections"></script>
+<script src="scheduled-payments.js?v=20260806-notification-approval"></script>
 <script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
 <script src="viewToggle.js"></script>
 
