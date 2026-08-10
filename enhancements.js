@@ -130,6 +130,11 @@ function yemReviewDormantVisibility(month, year) {
 }
 
 function yemExpenseActive(expense, month, year) {
+  if (expense.paymentPattern === "spread" && /^\d{4}-\d{2}$/.test(expense.allocationStartMonth || "")) {
+    const [startYear, startMonth] = expense.allocationStartMonth.split("-").map(Number);
+    const offset = (year - startYear) * 12 + month - (startMonth - 1);
+    return offset >= 0 && offset < (Number(expense.allocationMonths) || 0);
+  }
   if (expense.activeStart || expense.activeEnd) {
     return yemRangeOverlapsMonth(expense.activeStart, expense.activeEnd, month, year);
   }
@@ -137,8 +142,21 @@ function yemExpenseActive(expense, month, year) {
   return !Number.isNaN(date.getTime()) && date.getMonth() === month && date.getFullYear() === year;
 }
 
-function yemSignedAmount(expense) {
+function yemAmountForMonth(expense, month, year) {
   const amount = Number(expense.amount) || 0;
+  if (expense.paymentPattern !== "spread" || month === undefined || year === undefined) return amount;
+  const [startYear, startMonth] = String(expense.allocationStartMonth || "").split("-").map(Number);
+  const count = Number(expense.allocationMonths) || 0;
+  const offset = (year - startYear) * 12 + month - (startMonth - 1);
+  if (!Number.isInteger(startYear) || !Number.isInteger(startMonth) || !Number.isInteger(count) || count < 1 || offset < 0 || offset >= count) return 0;
+  const cents = Math.round(amount * 100);
+  const base = Math.floor(cents / count);
+  const remainder = cents % count;
+  return (base + (offset < remainder ? 1 : 0)) / 100;
+}
+
+function yemSignedAmount(expense, month, year) {
+  const amount = yemAmountForMonth(expense, month, year);
   return expense.transactionType === "credit" ? -amount : amount;
 }
 
@@ -183,17 +201,25 @@ function yemRenderExpenseCard(expense, options = {}) {
   const card = document.createElement("article");
   card.className = "feature-result-card";
   const heading = document.createElement("h3");
-  heading.textContent = `${expense.transactionType === "credit" ? "Credit" : "Debit"}: ${yemMoney(yemSignedAmount(expense))}`;
+  heading.textContent = `${expense.transactionType === "credit" ? "Refund / Credit" : "Expense"}: ${yemMoney(yemSignedAmount(expense))}`;
   const meta = document.createElement("p");
   meta.textContent = `${expense.category || "Uncategorized"} · ${new Date(expense.date).toLocaleString()}`;
   const notes = document.createElement("p");
   notes.textContent = expense.details || "No notes";
   const duration = document.createElement("p");
   duration.className = "feature-duration";
-  duration.textContent = expense.activeStart || expense.activeEnd
-    ? `Active: ${expense.activeStart || "No start limit"} to ${expense.activeEnd || "No expiry"}`
-    : "One-time entry";
+  duration.textContent = expense.paymentPattern === "spread"
+    ? `Paid once; allocated across ${expense.allocationMonths} months from ${expense.allocationStartMonth}`
+    : expense.activeStart || expense.activeEnd
+      ? `Active: ${expense.activeStart || "No start limit"} to ${expense.activeEnd || "No expiry"}`
+      : "One-time entry";
   card.append(heading, meta, notes, duration);
+  if (expense.paymentPattern === "spread" && options.month !== undefined && options.year !== undefined) {
+    const allocation = document.createElement("p");
+    allocation.className = "feature-allocation";
+    allocation.textContent = `Contribution to this month’s budget: ${yemMoney(yemSignedAmount(expense, options.month, options.year))}`;
+    card.appendChild(allocation);
+  }
   if (options.editable) {
     const edit = document.createElement("button");
     edit.type = "button";
@@ -311,7 +337,7 @@ updateRemainingBudget = function () {
   const activeExpenses = expenses.filter(expense => activeCategories.includes(expense.category) && yemExpenseActive(expense, month, year));
   const spent = {};
   activeExpenses.forEach(expense => {
-    spent[expense.category] = (spent[expense.category] || 0) + yemSignedAmount(expense);
+    spent[expense.category] = (spent[expense.category] || 0) + yemSignedAmount(expense, month, year);
   });
 
   const totalLimit = activeCategories.reduce((sum, category) => sum + budgetByCategory[category].amount, 0);
@@ -385,7 +411,7 @@ viewCategoryExpenses = function (category) {
     empty.textContent = "No expenses found for this category and month.";
     list.appendChild(empty);
   } else {
-    filtered.forEach(expense => list.appendChild(yemRenderExpenseCard(expense, { editable: true })));
+    filtered.forEach(expense => list.appendChild(yemRenderExpenseCard(expense, { editable: true, month, year })));
   }
   document.getElementById("modal-overlay").style.display = "block";
   document.getElementById("category-expense-modal").style.display = "block";
@@ -408,6 +434,10 @@ function yemRunSearch() {
     expense.amount,
     expense.date,
     expense.transactionType || "debit",
+    expense.paymentMethod || "legacy-payment-method",
+    expense.paymentPattern || "regular",
+    expense.allocationStartMonth,
+    expense.allocationMonths,
     categoryKinds[expense.category] || "Variable"
   ].map(value => String(value || "").toLowerCase());
   const matches = expenses.filter(expense => searchableValues(expense).some(value => value.includes(query)));
@@ -447,7 +477,7 @@ renderDateHistory = function (dateString) {
   const table = document.createElement("table");
   const head = document.createElement("thead");
   const headRow = document.createElement("tr");
-  ["Time", "Category", "Type", "Amount", "Details", "Duration"].forEach(label => {
+  ["Time", "Category", "Type", "Paid With", "Amount", "Details", "Budget Treatment"].forEach(label => {
     const cell = document.createElement("th");
     cell.textContent = label;
     headRow.appendChild(cell);
@@ -459,10 +489,13 @@ renderDateHistory = function (dateString) {
     const values = [
       new Date(expense.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       expense.category,
-      expense.transactionType === "credit" ? "Credit" : "Debit",
+      expense.transactionType === "credit" ? "Refund / Credit" : "Expense",
+      expense.paymentMethod === "credit-card" ? "Credit Card" : expense.paymentMethod === "debit-card" ? "Debit Card" : "Legacy entry",
       yemMoney(yemSignedAmount(expense)),
       expense.details || "-",
-      expense.activeStart || expense.activeEnd ? `${expense.activeStart || "…"} to ${expense.activeEnd || "…"}` : "One-time"
+      expense.paymentPattern === "spread"
+        ? `Paid once; ${expense.allocationMonths}-month allocation from ${expense.allocationStartMonth}`
+        : expense.activeStart || expense.activeEnd ? `${expense.activeStart || "…"} to ${expense.activeEnd || "…"}` : "One-time"
     ];
     values.forEach(value => {
       const cell = document.createElement("td");
@@ -508,7 +541,23 @@ exportData = function () {
       catch { return {}; }
     })(),
     deletedCategories,
-    deletedEntries
+    deletedEntries,
+    scheduledPayments: (() => {
+      try { return JSON.parse(localStorage.getItem("scheduledPayments") || "[]"); }
+      catch { return []; }
+    })(),
+    scheduledOccurrences: (() => {
+      try { return JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}"); }
+      catch { return {}; }
+    })(),
+    scheduledNotifications: (() => {
+      try { return JSON.parse(localStorage.getItem("scheduledNotifications") || "[]"); }
+      catch { return []; }
+    })(),
+    dismissedScheduledNotifications: (() => {
+      try { return JSON.parse(localStorage.getItem("dismissedScheduledNotifications") || "[]"); }
+      catch { return []; }
+    })()
   };
   const stamp = new Date().toISOString().replaceAll(":", "-").slice(0, 19);
   const suggestedName = `Expense Backup - ${stamp}.json`;

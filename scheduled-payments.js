@@ -147,6 +147,7 @@
     document.getElementById("approval-occurrence-id").value = notification.occurrenceId;
     document.getElementById("approval-actual-date").value = dateKey(new Date());
     document.getElementById("approval-actual-amount").value = Number(plan.expectedAmount).toFixed(2);
+    document.getElementById("approval-payment-method").value = plan.paymentMethod || "debit-card";
     document.getElementById("approval-statement-description").value = "";
     document.getElementById("approval-notes").value = "";
     document.getElementById("scheduled-approval-summary").textContent = `${plan.details || plan.category}: expected $${Number(plan.expectedAmount).toFixed(2)} on ${parseDate(notification.dueDate).toLocaleDateString()}. The expected details are copied automatically.`;
@@ -177,6 +178,7 @@
       expectedAmount: Number(data.amount),
       details: data.details,
       transactionType: data.transactionType || "debit",
+      paymentMethod: data.paymentMethod || "debit-card",
       scheduledDay: selected.getDate(),
       activeStart: start,
       activeEnd: data.activeEnd || "",
@@ -202,6 +204,7 @@
     const { plan } = related(notification);
     const actualDate = document.getElementById("approval-actual-date").value;
     const actualAmount = Number(document.getElementById("approval-actual-amount").value);
+    const paymentMethod = document.getElementById("approval-payment-method").value;
     if (!actualDate || !Number.isFinite(actualAmount) || actualAmount <= 0) return alert("Enter a valid deduction date and amount.");
     if (expenses.some(item => item.scheduledOccurrenceId === notification.occurrenceId)) {
       removeOccurrenceNotifications(notification.occurrenceId); save();
@@ -210,10 +213,12 @@
     const statement = document.getElementById("approval-statement-description").value.trim();
     const notes = document.getElementById("approval-notes").value.trim();
     const postedDate = new Date(`${actualDate}T12:00:00`);
-    const details = [plan.details, statement && `Statement: ${statement}`, notes].filter(Boolean).join(" — ");
+    const cardLabel = paymentMethod === "credit-card" ? "Credit Card" : "Debit Card";
+    const baseDetails = String(plan.details || "").replace(/\s*[—-]\s*(?:Credit|Debit) Card\s*$/i, "").trim();
+    const details = [baseDetails, statement && `Statement: ${statement}`, notes, cardLabel].filter(Boolean).join(" — ");
     expenses.push({
       date: postedDate.toISOString(), category: plan.category, amount: actualAmount,
-      details, transactionType: plan.transactionType, activeStart: "", activeEnd: "",
+      details, transactionType: plan.transactionType, paymentMethod, paymentPattern: "regular", activeStart: "", activeEnd: "",
       expectedDueDate: notification.dueDate, actualDeductionDate: actualDate,
       expectedAmount: Number(plan.expectedAmount), statementDescription: statement,
       scheduledPaymentId: plan.id, scheduledOccurrenceId: notification.occurrenceId, status: "posted"

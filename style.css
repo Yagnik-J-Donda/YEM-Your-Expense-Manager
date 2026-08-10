@@ -2206,6 +2206,34 @@ th:nth-child(4) {
   font-size: 0.86rem;
 }
 
+.spread-payment-fields {
+  margin: 4px 0 10px;
+  padding: 16px;
+  border: 1px solid #d8def0;
+  border-radius: 12px;
+  background: #f8f9ff;
+}
+
+.spread-payment-fields[hidden] {
+  display: none;
+}
+
+.allocation-preview {
+  margin: 2px 0 10px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #287d32;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.feature-allocation {
+  margin: 8px 0;
+  color: #287d32;
+  font-weight: 800;
+}
+
 .unlimited-category-option {
   display: flex;
   grid-column: 1 / -1;
@@ -2782,7 +2810,7 @@ th:nth-child(4) {
 .notification-empty { padding: 35px 15px; text-align: center; color: #667085; }
 .scheduled-approval-form { display: grid; gap: 12px; }
 .scheduled-approval-form label { display: grid; gap: 5px; font-weight: 700; }
-.scheduled-approval-form input, .scheduled-approval-form textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d0d5dd; border-radius: 8px; }
+.scheduled-approval-form input, .scheduled-approval-form select, .scheduled-approval-form textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d0d5dd; border-radius: 8px; }
 .approval-summary { padding: 11px; border-radius: 8px; background: #f2f4f7; }
 
 @media (max-width: 640px) {

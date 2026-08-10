@@ -121,14 +121,70 @@ function saveExpenses() {
 }
 
 // ==== Form Submission ====
-function detailsWithCardType(details, transactionType) {
-  const cardLabel = transactionType === "credit" ? "Credit Card" : "Debit Card";
+function detailsWithCardType(details, paymentMethod) {
+  const cardLabel = paymentMethod === "credit-card" ? "Credit Card" : "Debit Card";
   const cleaned = String(details || "")
     .trim()
     .replace(/\s*[—-]\s*(?:Credit|Debit) Card\s*$/i, "")
     .trim();
   return cleaned ? `${cleaned} — ${cardLabel}` : cardLabel;
 }
+
+function monthValueFromDate(value) {
+  const date = new Date(value || new Date());
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function allocationEndMonth(startMonth, monthCount) {
+  if (!/^\d{4}-\d{2}$/.test(startMonth) || !Number.isInteger(monthCount) || monthCount < 1) return "";
+  const [year, month] = startMonth.split("-").map(Number);
+  const end = new Date(year, month - 1 + monthCount - 1, 1);
+  return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function allocationMonthlyRange(amount, monthCount) {
+  if (!Number.isFinite(amount) || !Number.isInteger(monthCount) || monthCount < 1) return "";
+  const cents = Math.round(amount * 100);
+  const base = Math.floor(cents / monthCount);
+  const remainder = cents % monthCount;
+  if (!remainder) return `$${(base / 100).toFixed(2)} per month`;
+  return `$${(base / 100).toFixed(2)}–$${((base + 1) / 100).toFixed(2)} per month`;
+}
+
+function syncPaymentPattern() {
+  const pattern = document.getElementById("payment-pattern").value;
+  const spread = pattern === "spread";
+  document.getElementById("spread-payment-fields").hidden = !spread;
+  document.getElementById("regular-schedule-fields").hidden = spread;
+  document.getElementById("allocation-start-month").required = spread;
+  document.getElementById("allocation-months").required = spread;
+  document.getElementById("expense-duration-help").hidden = spread;
+  updateAllocationPreview();
+}
+
+function updateAllocationPreview() {
+  const amount = Number(document.getElementById("amount").value);
+  const start = document.getElementById("allocation-start-month").value;
+  const months = Number(document.getElementById("allocation-months").value);
+  const end = allocationEndMonth(start, months);
+  document.getElementById("allocation-preview").textContent = amount > 0 && end
+    ? `Budget allocation: ${allocationMonthlyRange(amount, months)} from ${start} through ${end}. Actual transaction: $${amount.toFixed(2)} once.`
+    : "Enter the amount, coverage start and number of months to preview the allocation.";
+}
+
+document.getElementById("payment-pattern").addEventListener("change", syncPaymentPattern);
+document.getElementById("amount").addEventListener("input", updateAllocationPreview);
+document.getElementById("allocation-start-month").addEventListener("input", updateAllocationPreview);
+document.getElementById("allocation-months").addEventListener("input", updateAllocationPreview);
+document.getElementById("date").addEventListener("change", () => {
+  if (!document.getElementById("allocation-start-month").value) {
+    document.getElementById("allocation-start-month").value = monthValueFromDate(document.getElementById("date").value);
+  }
+  updateAllocationPreview();
+});
+document.getElementById("allocation-start-month").value = monthValueFromDate(document.getElementById("date").value);
+syncPaymentPattern();
 
 document.getElementById("expense-form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -137,7 +193,9 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
   const category = document.getElementById("category").value;
   const amount = parseFloat(document.getElementById("amount").value);
   const transactionType = document.getElementById("transaction-type").value;
-  const details = detailsWithCardType(document.getElementById("details").value, transactionType);
+  const paymentMethod = document.getElementById("payment-method").value;
+  const details = detailsWithCardType(document.getElementById("details").value, paymentMethod);
+  const paymentPattern = document.getElementById("payment-pattern").value;
   const activeStart = document.getElementById("expense-start-date").value;
   const activeEnd = document.getElementById("expense-end-date").value;
 
@@ -147,12 +205,12 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     return;
   }
 
-  if (activeStart && activeEnd && activeStart > activeEnd) {
+  if (paymentPattern !== "spread" && activeStart && activeEnd && activeStart > activeEnd) {
     alert("The expense expiry date cannot be before its start date.");
     return;
   }
 
-  const scheduleExpense = document.getElementById("schedule-expense").checked;
+  const scheduleExpense = paymentPattern === "scheduled";
   if (scheduleExpense) {
     if (typeof window.yemCreateScheduledPayment !== "function") {
       alert("The scheduled-payment feature could not be loaded. Please refresh and try again.");
@@ -164,13 +222,27 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
       amount,
       details,
       transactionType,
+      paymentMethod,
       activeStart,
       activeEnd
     });
     e.target.reset();
     setCurrentDateTime();
+    document.getElementById("allocation-start-month").value = monthValueFromDate(document.getElementById("date").value);
+    syncPaymentPattern();
     document.activeElement.blur();
     return;
+  }
+
+  let allocationStartMonth = "";
+  let allocationMonths = 0;
+  if (paymentPattern === "spread") {
+    allocationStartMonth = document.getElementById("allocation-start-month").value;
+    allocationMonths = Number(document.getElementById("allocation-months").value);
+    if (!/^\d{4}-\d{2}$/.test(allocationStartMonth) || !Number.isInteger(allocationMonths) || allocationMonths < 2 || allocationMonths > 120) {
+      alert("Please enter a valid coverage start and a duration between 2 and 120 months.");
+      return;
+    }
   }
 
   expenses.push({
@@ -179,14 +251,20 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     amount,
     details,
     transactionType,
-    activeStart,
-    activeEnd
+    paymentMethod,
+    paymentPattern,
+    activeStart: paymentPattern === "spread" ? "" : activeStart,
+    activeEnd: paymentPattern === "spread" ? "" : activeEnd,
+    allocationStartMonth,
+    allocationMonths
   });
   saveExpenses();
 
   e.target.reset();
   document.getElementById("details").value = ""; // ✅ Clear details explicitly (optional)
   setCurrentDateTime(); // ✅ Refill current time after reset
+  document.getElementById("allocation-start-month").value = monthValueFromDate(document.getElementById("date").value);
+  syncPaymentPattern();
   document.activeElement.blur();
   
   // ✅ Refresh the page
@@ -779,14 +857,43 @@ function openEditExpenseModal(category, dateStr, amount) {
   document.getElementById("edit-amount").value = exp.amount;
   document.getElementById("edit-details").value = exp.details || "";
   document.getElementById("edit-transaction-type").value = exp.transactionType || "debit";
+  document.getElementById("edit-payment-method").value = exp.paymentMethod || "debit-card";
+  document.getElementById("edit-payment-pattern").value = exp.paymentPattern === "spread" ? "spread" : "regular";
+  document.getElementById("edit-allocation-start-month").value = exp.allocationStartMonth || monthValueFromDate(exp.date);
+  document.getElementById("edit-allocation-months").value = Number(exp.allocationMonths) || 12;
   document.getElementById("edit-expense-start-date").value = exp.activeStart || "";
   document.getElementById("edit-expense-end-date").value = exp.activeEnd || "";
   document.getElementById("edit-index").value = index;
+  syncEditPaymentPattern();
 
   document.getElementById("edit-expense-modal").style.display = "block";
   document.getElementById("edit-overlay").style.display = "block";
   document.body.classList.add("no-scroll");
 }
+
+function updateEditAllocationPreview() {
+  const amount = Number(document.getElementById("edit-amount").value);
+  const start = document.getElementById("edit-allocation-start-month").value;
+  const months = Number(document.getElementById("edit-allocation-months").value);
+  const end = allocationEndMonth(start, months);
+  document.getElementById("edit-allocation-preview").textContent = amount > 0 && end
+    ? `Budget allocation: ${allocationMonthlyRange(amount, months)} from ${start} through ${end}.`
+    : "Enter valid allocation details.";
+}
+
+function syncEditPaymentPattern() {
+  const spread = document.getElementById("edit-payment-pattern").value === "spread";
+  document.getElementById("edit-spread-payment-fields").hidden = !spread;
+  document.getElementById("edit-regular-duration-fields").hidden = spread;
+  document.getElementById("edit-allocation-start-month").required = spread;
+  document.getElementById("edit-allocation-months").required = spread;
+  updateEditAllocationPreview();
+}
+
+document.getElementById("edit-payment-pattern").addEventListener("change", syncEditPaymentPattern);
+document.getElementById("edit-amount").addEventListener("input", updateEditAllocationPreview);
+document.getElementById("edit-allocation-start-month").addEventListener("input", updateEditAllocationPreview);
+document.getElementById("edit-allocation-months").addEventListener("input", updateEditAllocationPreview);
 
 // ✅ Delete (Soft Delete) to deletedEntries[]
 function deleteCurrentExpense() {
@@ -969,6 +1076,8 @@ document.getElementById("edit-expense-form").addEventListener("submit", function
   const newAmount = parseFloat(document.getElementById("edit-amount").value);
   const newDetails = document.getElementById("edit-details").value.trim();
   const transactionType = document.getElementById("edit-transaction-type").value;
+  const paymentMethod = document.getElementById("edit-payment-method").value;
+  const paymentPattern = document.getElementById("edit-payment-pattern").value;
   const activeStart = document.getElementById("edit-expense-start-date").value;
   const activeEnd = document.getElementById("edit-expense-end-date").value;
 
@@ -977,17 +1086,28 @@ document.getElementById("edit-expense-form").addEventListener("submit", function
     return;
   }
 
-  if (activeStart && activeEnd && activeStart > activeEnd) {
+  if (paymentPattern !== "spread" && activeStart && activeEnd && activeStart > activeEnd) {
     alert("The expense expiry date cannot be before its start date.");
+    return;
+  }
+
+  const allocationStartMonth = paymentPattern === "spread" ? document.getElementById("edit-allocation-start-month").value : "";
+  const allocationMonths = paymentPattern === "spread" ? Number(document.getElementById("edit-allocation-months").value) : 0;
+  if (paymentPattern === "spread" && (!/^\d{4}-\d{2}$/.test(allocationStartMonth) || !Number.isInteger(allocationMonths) || allocationMonths < 2 || allocationMonths > 120)) {
+    alert("Please enter valid allocation details.");
     return;
   }
 
   expenses[index].date = newDate.toISOString();
   expenses[index].amount = newAmount;
-  expenses[index].details = detailsWithCardType(newDetails, transactionType);
+  expenses[index].details = detailsWithCardType(newDetails, paymentMethod);
   expenses[index].transactionType = transactionType;
-  expenses[index].activeStart = activeStart;
-  expenses[index].activeEnd = activeEnd;
+  expenses[index].paymentMethod = paymentMethod;
+  expenses[index].paymentPattern = paymentPattern;
+  expenses[index].activeStart = paymentPattern === "spread" ? "" : activeStart;
+  expenses[index].activeEnd = paymentPattern === "spread" ? "" : activeEnd;
+  expenses[index].allocationStartMonth = allocationStartMonth;
+  expenses[index].allocationMonths = allocationMonths;
 
   saveExpenses();
 

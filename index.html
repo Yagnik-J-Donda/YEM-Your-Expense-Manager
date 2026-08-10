@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css?v=20260806-main-card-layout" />
+  <link rel="stylesheet" href="style.css?v=20260810-prepaid-allocation" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="main-body">
@@ -66,10 +66,16 @@
   <label for="amount">Enter Amount *</label>
   <input type="number" id="amount" step="0.01" min="0" placeholder="Enter amount" required />
 
-  <label for="transaction-type">Transaction Type *</label>
+  <label for="transaction-type">Entry Type *</label>
   <select id="transaction-type" required>
-    <option value="debit">Debit Card (expense)</option>
-    <option value="credit">Credit Card (reduces spending)</option>
+    <option value="debit">Expense</option>
+    <option value="credit">Refund / Credit (reduces spending)</option>
+  </select>
+
+  <label for="payment-method">Paid With *</label>
+  <select id="payment-method" required>
+    <option value="debit-card">Debit Card</option>
+    <option value="credit-card">Credit Card</option>
   </select>
 
   <!-- 📝 Details -->
@@ -89,7 +95,14 @@
   <label for="date">Select Date & Time *</label>
   <input type="datetime-local" id="date" required />
 
-  <div class="duration-input-grid">
+  <label for="payment-pattern">Payment Pattern *</label>
+  <select id="payment-pattern" required>
+    <option value="regular">Regular expense</option>
+    <option value="scheduled">Scheduled monthly payment (approval required)</option>
+    <option value="spread">Spread this payment across multiple months</option>
+  </select>
+
+  <div id="regular-schedule-fields" class="duration-input-grid">
     <label>Active From
       <input type="date" id="expense-start-date" />
     </label>
@@ -97,11 +110,20 @@
       <input type="date" id="expense-end-date" />
     </label>
   </div>
-  <label class="scheduled-expense-option">
-    <input type="checkbox" id="schedule-expense" />
-    <span>Schedule this expense monthly and require approval before posting</span>
-  </label>
-  <p class="field-help" id="expense-duration-help">Leave both duration fields empty for a one-time entry. For a scheduled expense, the selected date sets its monthly due day and the duration controls when the schedule is active.</p>
+  <p class="field-help" id="expense-duration-help">For a scheduled expense, the selected date sets its monthly due day and the duration controls when the schedule is active.</p>
+
+  <div id="spread-payment-fields" class="spread-payment-fields" hidden>
+    <div class="duration-input-grid">
+      <label>Coverage Starts *
+        <input type="month" id="allocation-start-month" />
+      </label>
+      <label>Number of Months *
+        <input type="number" id="allocation-months" min="2" max="120" step="1" value="12" />
+      </label>
+    </div>
+    <p id="allocation-preview" class="allocation-preview" aria-live="polite"></p>
+    <p class="field-help">The full charge stays in transaction history. Only the calculated monthly share contributes to each month’s Remaining Budget.</p>
+  </div>
 
   <!-- ➕ Submit Button -->
   <button type="submit">Add Expense</button>
@@ -378,10 +400,26 @@
     </label>
 
     <label style="display: block; margin-bottom: 12px;">
-      Transaction type:<br>
+      Entry type:<br>
       <select id="edit-transaction-type" style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;">
-        <option value="debit">Debit Card (expense)</option>
-        <option value="credit">Credit Card (reduces spending)</option>
+        <option value="debit">Expense</option>
+        <option value="credit">Refund / Credit (reduces spending)</option>
+      </select>
+    </label>
+
+    <label style="display: block; margin-bottom: 12px;">
+      Paid with:<br>
+      <select id="edit-payment-method" style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;">
+        <option value="debit-card">Debit Card</option>
+        <option value="credit-card">Credit Card</option>
+      </select>
+    </label>
+
+    <label style="display: block; margin-bottom: 12px;">
+      Budget treatment:<br>
+      <select id="edit-payment-pattern" style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;">
+        <option value="regular">Regular expense</option>
+        <option value="spread">Spread across multiple months</option>
       </select>
     </label>
 
@@ -392,13 +430,25 @@
         style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 5px; box-sizing: border-box;">
     </label>
 
-    <div class="duration-input-grid">
+    <div id="edit-regular-duration-fields" class="duration-input-grid">
       <label>Active From
         <input type="date" id="edit-expense-start-date" />
       </label>
       <label>Active Until
         <input type="date" id="edit-expense-end-date" />
       </label>
+    </div>
+
+    <div id="edit-spread-payment-fields" class="spread-payment-fields" hidden>
+      <div class="duration-input-grid">
+        <label>Coverage Starts *
+          <input type="month" id="edit-allocation-start-month" />
+        </label>
+        <label>Number of Months *
+          <input type="number" id="edit-allocation-months" min="2" max="120" step="1" value="12" />
+        </label>
+      </div>
+      <p id="edit-allocation-preview" class="allocation-preview" aria-live="polite"></p>
     </div>
 
     <input type="hidden" id="edit-index">
@@ -472,6 +522,12 @@
     <label>Actual amount *
       <input type="number" id="approval-actual-amount" min="0.01" step="0.01" required />
     </label>
+    <label>Paid with *
+      <select id="approval-payment-method" required>
+        <option value="debit-card">Debit Card</option>
+        <option value="credit-card">Credit Card</option>
+      </select>
+    </label>
     <label>Statement description or reference
       <input type="text" id="approval-statement-description" placeholder="Optional statement text" />
     </label>
@@ -526,9 +582,9 @@ scrollToTopBtn.addEventListener("click", () => {
 
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
-<script src="script.js?v=20260806-multi-projections"></script>
-<script src="enhancements.js?v=20260806-multi-projections"></script>
-<script src="scheduled-payments.js?v=20260806-notification-approval"></script>
+<script src="script.js?v=20260810-prepaid-allocation"></script>
+<script src="enhancements.js?v=20260810-prepaid-allocation"></script>
+<script src="scheduled-payments.js?v=20260810-prepaid-allocation"></script>
 <script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
 <script src="viewToggle.js"></script>
 
