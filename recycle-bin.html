@@ -4,9 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recycle Bin | YEM</title>
-  <link rel="stylesheet" href="style.css?v=20260806-multi-projections" />
+  <link rel="stylesheet" href="style.css?v=20260811-shared-header" />
 </head>
 <body class="recycle-bin-body">
+  <header class="yem-navbar secondary-navbar">
+    <a href="index.html" class="yem-logo" aria-label="YEM home"><strong>YEM</strong><span>Your Expense Manager</span></a>
+    <nav class="secondary-page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="categories.html">Categories</a>
+      <a href="recycle-bin.html" class="active" aria-current="page">Recycle Bin</a>
+    </nav>
+  </header>
   <main class="recycle-bin-page">
     <header class="recycle-bin-header">
       <div>
@@ -14,7 +22,6 @@
         <h1>🗑️ Recycle Bin</h1>
         <p>Review and restore deleted categories and expense entries.</p>
       </div>
-      <a href="index.html" class="back-home-button">← Back to Home</a>
     </header>
 
     <nav class="recycle-bin-tabs" aria-label="Recycle Bin sections">
@@ -42,7 +49,13 @@
 
     <p id="recycle-status" class="recycle-status" aria-live="polite"></p>
   </main>
+  <footer class="footer shared-page-footer">
+    © <span data-current-year></span> <strong>YEM – Your Expense Manager</strong>. All rights reserved.
+    <br />
+    Crafted with ❤️ to simplify your personal finances by
+    <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer">Yagnik Donda</a>.
+  </footer>
   <script src="recycle-bin.js?v=20260806-multi-projections"></script>
-<footer style="padding:1.25rem;text-align:center"><p data-portfolio-credit style="margin:1rem 0 0;text-align:center;font:500 0.85rem/1.5 system-ui,sans-serif;color:inherit;opacity:.82">Built by <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px">Yagnik Donda</a></p></footer>
+  <script src="footer.js?v=20260811-portfolio-credit"></script>
 </body>
 </html>

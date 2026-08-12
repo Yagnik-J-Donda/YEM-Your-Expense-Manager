@@ -231,6 +231,7 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     document.getElementById("allocation-start-month").value = monthValueFromDate(document.getElementById("date").value);
     syncPaymentPattern();
     document.activeElement.blur();
+    if (typeof window.yemEntryDialogSubmitted === "function") window.yemEntryDialogSubmitted("expense");
     return;
   }
 
@@ -1025,8 +1026,9 @@ function closeDeletedEntriesView() {
 
 // ✅ Close Sidebar
 function closeSidebar() {
-  document.getElementById("sidebar").style.left = "-300px";
+  document.getElementById("sidebar").classList.remove("nav-open");
   document.getElementById("nav-overlay").style.display = "none";
+  document.getElementById("menu-toggle")?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("no-scroll");
 }
 
@@ -1536,6 +1538,15 @@ function importData(event) {
         });
         localStorage.setItem(key, JSON.stringify(merged));
       });
+      ["incomeEntries"].forEach(key => {
+        if (!Array.isArray(imported[key])) return;
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const merged = [...current];
+        imported[key].forEach(item => {
+          if (!merged.some(existingItem => existingItem.id === item.id)) merged.push(item);
+        });
+        localStorage.setItem(key, JSON.stringify(merged));
+      });
       if (imported.scheduledOccurrences && typeof imported.scheduledOccurrences === "object") {
         const current = JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}");
         localStorage.setItem("scheduledOccurrences", JSON.stringify({ ...current, ...imported.scheduledOccurrences }));
@@ -1788,18 +1799,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const menuToggle = document.getElementById("menu-toggle");
 
   function openSidebar() {
-    sidebar.style.left = "0";
+    sidebar.classList.add("nav-open");
     overlay.style.display = "block";
+    menuToggle.setAttribute("aria-expanded", "true");
   }
 
   function closeSidebar() {
-    sidebar.style.left = "-100%";
+    sidebar.classList.remove("nav-open");
     overlay.style.display = "none";
+    menuToggle.setAttribute("aria-expanded", "false");
   }
 
   menuToggle.addEventListener("click", function (event) {
     event.stopPropagation();
-    const isOpen = sidebar.style.left === "0px";
+    const isOpen = sidebar.classList.contains("nav-open");
     isOpen ? closeSidebar() : openSidebar();
   });
 

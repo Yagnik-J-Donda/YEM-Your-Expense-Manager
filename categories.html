@@ -6,10 +6,18 @@
 
   <title>Manage Categories | YEM</title>
 
-  <link rel="stylesheet" href="style.css?v=20260806-personal-category-suggestions" />
+  <link rel="stylesheet" href="style.css?v=20260811-shared-header" />
 </head>
 
 <body class="categories-body">
+  <header class="yem-navbar secondary-navbar">
+    <a href="index.html" class="yem-logo" aria-label="YEM home"><strong>YEM</strong><span>Your Expense Manager</span></a>
+    <nav class="secondary-page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="categories.html" class="active" aria-current="page">Categories</a>
+      <a href="recycle-bin.html">Recycle Bin</a>
+    </nav>
+  </header>
   <div class="wrapper">
     <main class="category-management-page">
       <div class="category-page-container">
@@ -24,9 +32,6 @@
             </p>
           </div>
 
-          <a href="index.html" class="back-home-button">
-            ← Back to Home
-          </a>
         </header>
 
         <section class="category-form-section category-checker-section">
@@ -187,11 +192,11 @@
     </main>
 
     <footer class="footer">
-      © 2025 <strong>YEM – Your Expense Manager</strong>. All rights reserved.
+      © <span data-current-year></span> <strong>YEM – Your Expense Manager</strong>. All rights reserved.
       <br />
-      Crafted with ❤️ to simplify your personal finances.
-    <p data-portfolio-credit style="margin:1rem 0 0;text-align:center;font:500 0.85rem/1.5 system-ui,sans-serif;color:inherit;opacity:.82">Built by <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px">Yagnik Donda</a></p>
-</footer>
+      Crafted with ❤️ to simplify your personal finances by
+      <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer">Yagnik Donda</a>.
+    </footer>
   </div>
 
   <!-- Edit Category Modal -->
@@ -336,5 +341,6 @@
   <!-- <script src="script.js"></script> -->
   <script src="categories.js?v=20260806-multi-projections"></script>
   <script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
+  <script src="footer.js?v=20260811-portfolio-credit"></script>
 </body>
 </html>

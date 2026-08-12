@@ -390,12 +390,29 @@ updateRemainingBudget = function () {
   const totalUsed = activeCategories.reduce((sum, category) => sum + (spent[category] || 0), 0);
   const remaining = totalLimit - totalUsed;
   const percent = totalLimit > 0 ? (totalUsed / totalLimit * 100).toFixed(1) : "0.0";
+  const selectedKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  let incomeEntries = [];
+  try { incomeEntries = JSON.parse(localStorage.getItem("incomeEntries") || "[]"); }
+  catch { incomeEntries = []; }
+  const incomeReceived = incomeEntries
+    .filter(item => String(item.date || "").slice(0, 7) === selectedKey)
+    .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const expensesRecorded = expenses
+    .filter(expense => yemExpenseActive(expense, month, year))
+    .reduce((sum, expense) => sum + yemSignedAmount(expense, month, year), 0);
+  const netProfit = incomeReceived - expensesRecorded;
   document.getElementById("total-summary").innerHTML = `
     <div class="total-summary-grid">
-      <div class="label">💸 Net Spent:</div><div class="value">${yemMoney(totalUsed)}</div>
-      <div class="label">💼 Total Remaining:</div><div class="value">${yemMoney(remaining)}</div>
-      <div class="label">📈 Total Projected:</div><div class="value">${yemMoney(totalLimit)}</div>
-      <div class="label">📊 Used:</div><div class="value">${percent}%</div>
+      <div class="summary-financial-row">
+        <div class="summary-metric income-metric"><span>💰 Income Received</span><strong>${yemMoney(incomeReceived)}</strong></div>
+        <div class="summary-metric expense-metric"><span>💸 Expenses Recorded</span><strong>${yemMoney(expensesRecorded)}</strong></div>
+        <div class="summary-metric net-metric ${netProfit >= 0 ? "profit" : "loss"}"><span>${netProfit >= 0 ? "✨ Net Profit" : "⚠️ Net Shortfall"}</span><strong>${yemMoney(netProfit)}</strong></div>
+      </div>
+      <div class="summary-budget-row">
+        <div class="summary-metric"><span>💼 Total Remaining</span><strong>${yemMoney(remaining)}</strong></div>
+        <div class="summary-metric"><span>📈 Projected Expenses</span><strong>${yemMoney(totalLimit)}</strong></div>
+        <div class="summary-metric"><span>📊 Budget Used</span><strong>${percent}%</strong></div>
+      </div>
     </div>`;
   enableRowDragAndDrop("budget-body");
 };
@@ -556,6 +573,10 @@ exportData = function () {
     })(),
     dismissedScheduledNotifications: (() => {
       try { return JSON.parse(localStorage.getItem("dismissedScheduledNotifications") || "[]"); }
+      catch { return []; }
+    })(),
+    incomeEntries: (() => {
+      try { return JSON.parse(localStorage.getItem("incomeEntries") || "[]"); }
       catch { return []; }
     })()
   };

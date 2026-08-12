@@ -4,49 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css?v=20260810-prepaid-allocation" />
+  <link rel="stylesheet" href="style.css?v=20260811-entry-dialogs" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="main-body">
 
+<header class="yem-navbar">
+  <a href="index.html" class="yem-logo" aria-label="YEM home">
+    <strong>YEM</strong><span>Your Expense Manager</span>
+  </a>
+  <button type="button" id="menu-toggle" class="yem-menu-toggle" aria-label="Open navigation" aria-controls="sidebar">☰</button>
+  <nav id="sidebar" class="yem-header-nav" aria-label="Main navigation">
+    <a href="index.html" class="active">Home</a>
+    <a href="categories.html">Categories</a>
+    <a href="recycle-bin.html">Recycle Bin</a>
+    <button type="button" id="notification-center-button" class="notification-center-button" aria-label="Open notification center">
+      <span aria-hidden="true">🔔</span><span>Notifications</span><span id="notification-count" class="notification-count" hidden>0</span>
+    </button>
+    <details class="header-actions">
+      <summary>Actions</summary>
+      <div class="header-actions-menu">
+        <button class="onboard" onclick="showOnboardingModalAgain()">❓ Onboarding</button>
+        <button class="import" onclick="document.getElementById('import-file').click()">📥 Import Backup</button>
+        <button class="export" onclick="exportData()">📤 Export Backup</button>
+        <button class="reset" onclick="resetAllData()">♻️ Reset All Data</button>
+      </div>
+    </details>
+  </nav>
+</header>
+<div id="nav-overlay" style="display:none"></div>
+
 <div class="wrapper">
-
-<!-- ☰ Hamburger Button (Floating) -->
-<!-- <button id="menu-toggle" style="position: fixed; top: 10px; left: 10px; z-index: 1100; background: white; border: none; font-size: 24px; cursor: pointer; padding: 6px 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">☰</button> -->
-<!-- <button id="menu-toggle" style="position: fixed; top: 10px; left: 10px; z-index: 1100; border: none; font-size: 24px; cursor: pointer; padding: 6px 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(253, 251, 251, 0.2);">☰</button> -->
-<button id="menu-toggle">☰</button>
-
-<button type="button" id="notification-center-button" class="notification-center-button" aria-label="Open notification center">
-  <span aria-hidden="true">🔔</span>
-  <span>Notifications</span>
-  <span id="notification-count" class="notification-count" hidden>0</span>
-</button>
-
-
-
-<!-- 🔲 Sidebar Navigation -->
-<div id="nav-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 999;"></div>
-
-<div id="sidebar" style="position: fixed; top: 0; left: -250px; height: 100%; width: 250px; background-color: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.3s ease; z-index: 1000; padding: 20px; overflow-y: auto;">
-  <br><br><br>
-
-  <h3>⚙️ Settings</h3>
-  
-<a href="categories.html" class="sidebar-page-link">
-  🗂️ Manage Categories
-</a>
-  <button class="onboard" onclick="showOnboardingModalAgain()">❓ Onboarding Again</button>
-  <button class="import" onclick="document.getElementById('import-file').click()">📥 Import Backup</button>
-  <button class="export" onclick="exportData()">📤 Export Backup</button>
-  <button class="reset" onclick="resetAllData()">♻️ Reset All Data</button>
-
-  <hr />
-
-<a href="recycle-bin.html" class="sidebar-page-link">
-  🗑️ Recycle Bin
-</a>
-
-</div>
 
 
 
@@ -55,12 +43,9 @@
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
 
   <div class="container">
-    <header class="main-page-header">
-      <h1>YEM</h1>
-      <h2>(Your Expense Manager)</h2>
-    </header>
-    
-<section class="main-section-card main-entry-card">
+<div id="expense-entry-dialog" class="entry-dialog" role="dialog" aria-modal="true" aria-labelledby="expense-entry-title" hidden>
+<div class="entry-dialog-panel">
+<div class="entry-dialog-header"><h2 id="expense-entry-title">Add Expense</h2><button type="button" class="entry-dialog-close" data-close-entry-dialog aria-label="Close">×</button></div>
 <form id="expense-form">
   <!-- 💲 Amount -->
   <label for="amount">Enter Amount *</label>
@@ -134,7 +119,48 @@
     <button type="button" onclick="redoLastEntry()">Redo Last Entry</button>
   </div>
 </form>
-</section>
+</div>
+</div>
+
+    <section class="main-section-card income-manager-card" aria-labelledby="income-manager-title">
+      <div class="section-heading-row">
+        <div>
+          <h2 id="income-manager-title">Income &amp; Net Position</h2>
+          <p class="field-help">Income is recorded only when you receive it. No overtime or extra-income estimate is required.</p>
+        </div>
+      </div>
+
+      <div id="income-entry-dialog" class="entry-dialog" role="dialog" aria-modal="true" aria-labelledby="income-entry-title" hidden>
+        <div class="entry-dialog-panel">
+          <div class="entry-dialog-header"><h2 id="income-entry-title">Add Income</h2><button type="button" class="entry-dialog-close" data-close-entry-dialog aria-label="Close">×</button></div>
+          <form id="income-entry-form" class="income-panel entry-dialog-form">
+          <label>Income source *
+            <input id="income-entry-source" type="text" placeholder="Employer, client, sale…" required />
+          </label>
+          <label>Amount received *
+            <input id="income-entry-amount" type="number" min="0.01" step="0.01" required />
+          </label>
+          <label>Date received *
+            <input id="income-entry-date" type="date" required />
+          </label>
+          <label>Notes
+            <input id="income-entry-notes" type="text" placeholder="Overtime hours, reference, etc." />
+          </label>
+          <button type="submit">Record Income</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="income-table-block">
+        <h3>Income for Selected Month</h3>
+        <div class="table-wrapper">
+          <table class="income-table">
+            <thead><tr><th>Date</th><th>Source</th><th>Received</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody id="income-summary-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
 
 <!-- this one has gone to the saperate category page -->
@@ -152,7 +178,7 @@
       <button type="submit" style="padding: 5px 10px;">➕ Add Type</button>
     </form> -->
 
-    <section class="main-section-card">
+    <section class="main-section-card budget-section">
     <h2>Remaining Budget</h2>
 
     <div id="month-year-toggle">
@@ -191,6 +217,9 @@
 
     <div class="table-wrapper">
       <table id="budget-table">
+        <caption>
+          <div id="total-summary" class="total-summary-box"></div>
+        </caption>
         <thead>
           <tr>
             <th id="type-header" style="cursor: pointer;">Type ⬍</th>
@@ -206,8 +235,6 @@
       </table>
     </div>
 
-    <!-- 🔵 Total Summary (Separate from Table but within Budget Section) -->
-    <div id="total-summary" class="total-summary-box"></div>
     </section>
 
     <!-- <div style="text-align: center; margin-top: 15px;">
@@ -247,6 +274,17 @@
 
   </div>
 
+  <button type="button" id="open-entry-actions" class="floating-entry-button" aria-label="Add income or expense">+</button>
+  <div id="entry-choice-dialog" class="entry-dialog" role="dialog" aria-modal="true" aria-labelledby="entry-choice-title" hidden>
+    <div class="entry-dialog-panel entry-choice-panel">
+      <div class="entry-dialog-header"><h2 id="entry-choice-title">What would you like to add?</h2><button type="button" class="entry-dialog-close" data-close-entry-dialog aria-label="Close">×</button></div>
+      <div class="entry-choice-actions">
+        <button type="button" id="choose-expense-entry">💸 Add Expense</button>
+        <button type="button" id="choose-income-entry">💰 Add Income</button>
+      </div>
+    </div>
+  </div>
+
 <!-- 📊 Toggle Button for Full View Averages -->
 <div class="action-buttons" style="margin-top: 20px; text-align: center;">
   <button id="view-averages-btn" onclick="toggleAverages()">
@@ -275,10 +313,6 @@
     </table>
   </div>
 </div>
-
-
-
-
 
 <!-- THIS ONE HAS MOVED TO THE CATEGORIES PAGE (categories.html) -->
 <!-- 🔧 Modal Popup for Editing Category -->
@@ -544,11 +578,11 @@
 
 </div>
   <footer class="footer">
-    © 2025 <strong>YEM – Your Expense Manager</strong>. All rights reserved.
+    © <span data-current-year></span> <strong>YEM – Your Expense Manager</strong>. All rights reserved.
     <br />
-    Crafted with ❤️ to simplify your personal finances.
-  <p data-portfolio-credit style="margin:1rem 0 0;text-align:center;font:500 0.85rem/1.5 system-ui,sans-serif;color:inherit;opacity:.82">Built by <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px">Yagnik Donda</a></p>
-</footer>
+    Crafted with ❤️ to simplify your personal finances by
+    <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer">Yagnik Donda</a>.
+  </footer>
 </div>
 
 <!-- Scroll to Top Button -->
@@ -583,10 +617,13 @@ scrollToTopBtn.addEventListener("click", () => {
 
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
-<script src="script.js?v=20260810-prepaid-allocation"></script>
-<script src="enhancements.js?v=20260810-prepaid-allocation"></script>
+<script src="script.js?v=20260811-income-planning"></script>
+<script src="enhancements.js?v=20260811-income-planning"></script>
 <script src="scheduled-payments.js?v=20260810-prepaid-allocation"></script>
 <script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
+<script src="income.js?v=20260811-income-planning"></script>
+<script src="entry-dialogs.js?v=20260811-entry-dialogs"></script>
+<script src="footer.js?v=20260811-portfolio-credit"></script>
 <script src="viewToggle.js"></script>
 
 </body>
