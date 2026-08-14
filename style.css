@@ -195,17 +195,6 @@ body {
 .main-body .income-manager-card { order: 2; }
 .main-body .main-history-card { order: 3; }
 
-#budget-table caption {
-  caption-side: top;
-  padding: 0;
-  text-align: initial;
-}
-
-#budget-table caption .total-summary-grid {
-  width: 100%;
-  max-width: none;
-  margin: 0 0 16px;
-}
 
 .main-page-header,
 .main-section-card {
@@ -963,6 +952,7 @@ label + .date-sort-dropdown {
   .summary-financial-row,
   .summary-budget-row { grid-template-columns: 1fr; }
 }
+
 
 #edit-category-modal {
   display: none;
@@ -3165,6 +3155,99 @@ th:nth-child(4) {
   .secondary-page-nav a { padding: 8px 7px; font-size: .78rem; }
   .categories-body,
   .recycle-bin-body { padding-top: 84px; }
+}
+
+/* Refined Remaining Budget presentation using the existing YEM palette. */
+.budget-section {
+  overflow: hidden;
+  border-color: #dfe3f2;
+}
+
+.budget-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e8f3;
+  color: #27336f;
+}
+
+.budget-section #month-year-toggle {
+  justify-content: center;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid #e0e4f2;
+  border-radius: 12px;
+  background: #f8f9ff;
+}
+
+.budget-section #month-year-toggle .toggle-group {
+  min-width: 150px;
+}
+
+.budget-section #month-year-toggle label {
+  color: #475467;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.budget-section #month-year-toggle select {
+  border-color: #cdd3e5;
+  background-color: #fff;
+  color: #27336f;
+  font-weight: 700;
+}
+
+.budget-section .total-summary-grid {
+  padding: 16px;
+  border: 1px solid #d8deef;
+  background: linear-gradient(135deg, #f7f8ff 0%, #eef8ff 100%);
+  box-shadow: 0 6px 18px rgba(48, 63, 159, .08);
+}
+
+.budget-section .summary-metric {
+  border: 1px solid rgba(205, 213, 232, .82);
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, .04);
+}
+
+.budget-section .summary-metric.net-metric {
+  box-shadow: 0 4px 12px rgba(16, 24, 40, .08);
+}
+
+.budget-section .table-wrapper {
+  overflow: auto;
+  border: 1px solid #dde2ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.budget-section #budget-table {
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.budget-section #budget-table thead th {
+  border-color: #d9deec;
+  background: #edf0fb;
+  color: #27336f;
+}
+
+.budget-section #budget-table tbody tr:hover td {
+  background: #f7f8ff;
+}
+
+@media (max-width: 600px) {
+  .budget-section #month-year-toggle {
+    align-items: stretch;
+    padding: 12px;
+  }
+  .budget-section #month-year-toggle .toggle-group { width: 100%; min-width: 0; }
+  .budget-section .total-summary-grid { padding: 12px; }
 }
 
 @media (max-width: 640px) {

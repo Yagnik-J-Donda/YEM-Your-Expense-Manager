@@ -179,7 +179,7 @@
     </form> -->
 
     <section class="main-section-card budget-section">
-    <h2>Remaining Budget</h2>
+    <h2 class="budget-section-title"><span aria-hidden="true">📊</span> Remaining Budget</h2>
 
     <div id="month-year-toggle">
       <div class="toggle-group">
@@ -215,11 +215,10 @@
       </div>
     </div>
 
+    <aside id="total-summary" class="total-summary-box" aria-label="Monthly financial summary"></aside>
+
     <div class="table-wrapper">
       <table id="budget-table">
-        <caption>
-          <div id="total-summary" class="total-summary-box"></div>
-        </caption>
         <thead>
           <tr>
             <th id="type-header" style="cursor: pointer;">Type ⬍</th>
