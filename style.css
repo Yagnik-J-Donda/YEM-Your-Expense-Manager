@@ -3330,15 +3330,30 @@ html.auth-checking body {
 .auth-card-heading p, .auth-privacy-note { color: #607087; line-height: 1.55; }
 .auth-eyebrow { margin: 0; color: #258066 !important; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; padding: 5px; border-radius: 12px; background: #edf3f8; }
+.auth-tabs button { border: 0; border-radius: 9px; padding: 10px; color: #587086; background: transparent; font: inherit; font-weight: 800; cursor: pointer; }
+.auth-tabs button[aria-selected="true"] { color: #17345e; background: #fff; box-shadow: 0 3px 10px rgba(26, 61, 99, .1); }
 .cloud-login-form { display: grid; gap: 10px; }
+.cloud-login-form[hidden], .auth-tabs[hidden], .confirmation-actions[hidden] { display: none; }
 .cloud-login-form label { margin-top: 8px; font-weight: 700; }
 .cloud-login-form input { width: 100%; padding: 13px 14px; border: 1px solid #b9c8d9; border-radius: 10px; font: inherit; box-sizing: border-box; }
 .cloud-login-form input:focus { outline: 3px solid rgba(31, 95, 153, .16); border-color: #1f5f99; }
-.cloud-login-form button { margin-top: 14px; padding: 13px; border: 0; border-radius: 10px; color: #fff; background: #1f5f99; font: inherit; font-weight: 800; cursor: pointer; }
+.cloud-login-form button { font: inherit; cursor: pointer; }
+.auth-primary-button, .auth-secondary-button { margin-top: 14px; padding: 13px; border-radius: 10px; font-weight: 800; }
+.auth-primary-button { border: 0; color: #fff; background: #1f5f99; }
+.auth-secondary-button { border: 1px solid #b9c8d9; color: #17345e; background: #fff; }
 .cloud-login-form button:disabled { opacity: .6; cursor: not-allowed; }
+.password-field { position: relative; }
+.password-field input { padding-right: 68px; }
+.password-field .password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); margin: 0; padding: 7px 8px; border: 0; color: #1f5f99; background: transparent; font-size: .82rem; font-weight: 800; }
+.auth-form-links { display: flex; justify-content: flex-end; margin-top: 2px; }
+.auth-text-button { margin: 0; padding: 4px 0; border: 0; color: #1f5f99; background: transparent; font: inherit; font-weight: 750; cursor: pointer; }
+.auth-field-help { margin: -2px 0 2px; color: #607087; font-size: .8rem; line-height: 1.4; }
+.confirmation-actions { margin-top: 14px; text-align: center; }
 .auth-status { min-height: 24px; margin: 16px 0 0; line-height: 1.45; }
 .auth-status.error { color: #b42318; }
 .auth-status.info { color: #46627f; }
+.auth-status.success { color: #16704f; }
 .auth-privacy-note { margin: 18px 0 0; padding-top: 18px; border-top: 1px solid #e0e8f0; font-size: .86rem; }
 
 @media (max-width: 760px) {

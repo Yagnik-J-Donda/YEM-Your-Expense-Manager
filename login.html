@@ -3,33 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In | YEM</title>
-  <link rel="stylesheet" href="style.css?v=20260814-cloud-login" />
+  <title>Account Access | YEM</title>
+  <link rel="stylesheet" href="style.css?v=20260814-complete-auth" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <script src="cloud-auth.js" defer></script>
+  <script src="supabase-config.js?v=20260814-complete-auth"></script>
+  <script src="cloud-auth.js?v=20260814-complete-auth" defer></script>
 </head>
 <body class="auth-page">
   <main class="auth-page-shell">
-    <section class="auth-card" aria-labelledby="login-title">
+    <section class="auth-card" aria-labelledby="auth-title">
       <a href="index.html" class="auth-brand" aria-label="YEM home">
-        <span class="auth-brand-mark">YEM</span>
-        <span>Your Expense Manager</span>
+        <span class="auth-brand-mark">YEM</span><span>Your Expense Manager</span>
       </a>
+
       <div class="auth-card-heading">
-        <p class="auth-eyebrow">Private account access</p>
-        <h1 id="login-title">Welcome back</h1>
-        <p>Sign in with the private YEM account created for the owner. Public account registration is not available.</p>
+        <p class="auth-eyebrow">Secure cloud access</p>
+        <h1 id="auth-title">Welcome back</h1>
+        <p id="auth-description">Sign in to continue to your expense manager.</p>
       </div>
-      <form id="login-form" class="cloud-login-form">
-        <label for="login-email">Email address</label>
-        <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com" required />
-        <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" minlength="6" required />
-        <button id="login-submit" type="submit">Sign in</button>
+
+      <div id="auth-tabs" class="auth-tabs" role="tablist" aria-label="Account access options">
+        <button type="button" role="tab" data-auth-mode="signin" aria-selected="true">Sign in</button>
+        <button type="button" role="tab" data-auth-mode="signup" aria-selected="false">Create account</button>
+      </div>
+
+      <form id="signin-form" class="cloud-login-form" data-auth-panel="signin">
+        <label for="signin-email">Email address</label>
+        <input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <label for="signin-password">Password</label>
+        <div class="password-field">
+          <input id="signin-password" type="password" autocomplete="current-password" required />
+          <button type="button" class="password-toggle" data-password-target="signin-password" aria-label="Show password">Show</button>
+        </div>
+        <div class="auth-form-links"><button type="button" class="auth-text-button" data-auth-mode="forgot">Forgot password?</button></div>
+        <button class="auth-primary-button" type="submit">Sign in</button>
       </form>
+
+      <form id="signup-form" class="cloud-login-form" data-auth-panel="signup" hidden>
+        <label for="signup-email">Email address</label>
+        <input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <label for="signup-password">Create password</label>
+        <div class="password-field">
+          <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="password-requirements" />
+          <button type="button" class="password-toggle" data-password-target="signup-password" aria-label="Show password">Show</button>
+        </div>
+        <p id="password-requirements" class="auth-field-help">Use at least 8 characters, including an uppercase letter, lowercase letter and number.</p>
+        <label for="signup-confirm-password">Confirm password</label>
+        <div class="password-field">
+          <input id="signup-confirm-password" type="password" autocomplete="new-password" minlength="8" required />
+          <button type="button" class="password-toggle" data-password-target="signup-confirm-password" aria-label="Show password">Show</button>
+        </div>
+        <button class="auth-primary-button" type="submit">Create account</button>
+      </form>
+
+      <form id="forgot-form" class="cloud-login-form" data-auth-panel="forgot" hidden>
+        <label for="forgot-email">Email address</label>
+        <input id="forgot-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <button class="auth-primary-button" type="submit">Send reset link</button>
+        <button type="button" class="auth-secondary-button" data-auth-mode="signin">Back to sign in</button>
+      </form>
+
+      <form id="reset-form" class="cloud-login-form" data-auth-panel="reset" hidden>
+        <label for="reset-password">New password</label>
+        <div class="password-field">
+          <input id="reset-password" type="password" autocomplete="new-password" minlength="8" required />
+          <button type="button" class="password-toggle" data-password-target="reset-password" aria-label="Show password">Show</button>
+        </div>
+        <label for="reset-confirm-password">Confirm new password</label>
+        <div class="password-field">
+          <input id="reset-confirm-password" type="password" autocomplete="new-password" minlength="8" required />
+          <button type="button" class="password-toggle" data-password-target="reset-confirm-password" aria-label="Show password">Show</button>
+        </div>
+        <button class="auth-primary-button" type="submit">Update password</button>
+      </form>
+
+      <div id="confirmation-actions" class="confirmation-actions" hidden>
+        <button id="resend-confirmation" type="button" class="auth-text-button">Resend confirmation email</button>
+      </div>
       <p id="auth-status" class="auth-status" role="status" aria-live="polite"></p>
-      <p class="auth-privacy-note">Cloud login does not upload your existing financial records yet. Your browser data remains unchanged until you approve a separate migration.</p>
+      <p class="auth-privacy-note">Authentication is secured by Supabase. Existing browser financial records are not uploaded until you approve a separate migration.</p>
     </section>
   </main>
 </body>
