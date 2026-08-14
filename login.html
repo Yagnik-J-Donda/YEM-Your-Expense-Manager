@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-checking">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In | YEM</title>
+  <link rel="stylesheet" href="style.css?v=20260814-cloud-login" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="cloud-auth.js" defer></script>
+</head>
+<body class="auth-page">
+  <main class="auth-page-shell">
+    <section class="auth-card" aria-labelledby="login-title">
+      <a href="index.html" class="auth-brand" aria-label="YEM home">
+        <span class="auth-brand-mark">YEM</span>
+        <span>Your Expense Manager</span>
+      </a>
+      <div class="auth-card-heading">
+        <p class="auth-eyebrow">Private account access</p>
+        <h1 id="login-title">Welcome back</h1>
+        <p>Sign in with the private YEM account created for the owner. Public account registration is not available.</p>
+      </div>
+      <form id="login-form" class="cloud-login-form">
+        <label for="login-email">Email address</label>
+        <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" minlength="6" required />
+        <button id="login-submit" type="submit">Sign in</button>
+      </form>
+      <p id="auth-status" class="auth-status" role="status" aria-live="polite"></p>
+      <p class="auth-privacy-note">Cloud login does not upload your existing financial records yet. Your browser data remains unchanged until you approve a separate migration.</p>
+    </section>
+  </main>
+</body>
+</html>

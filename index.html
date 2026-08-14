@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="auth-checking">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
   <link rel="stylesheet" href="style.css?v=20260811-entry-dialogs" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="cloud-auth.js" defer></script>
 </head>
 <body class="main-body">
 
@@ -18,6 +21,10 @@
     <a href="index.html" class="active">Home</a>
     <a href="categories.html">Categories</a>
     <a href="recycle-bin.html">Recycle Bin</a>
+    <details class="account-menu">
+      <summary><span aria-hidden="true">👤</span> <span data-auth-email>Account</span></summary>
+      <div class="account-menu-panel"><button type="button" data-auth-signout>Sign out</button></div>
+    </details>
     <button type="button" id="notification-center-button" class="notification-center-button" aria-label="Open notification center">
       <span aria-hidden="true">🔔</span><span>Notifications</span><span id="notification-count" class="notification-count" hidden>0</span>
     </button>

@@ -20,14 +20,6 @@ function getMonthKeyFromDate(dateStr) {
   return `${month} ${year}`;
 }
 
-function saveExpenses() {
-  localStorage.setItem("expenses", JSON.stringify(expenses));
-  localStorage.setItem("recycleBin", JSON.stringify(recycleBin));
-  localStorage.setItem("deletedCategories", JSON.stringify(deletedCategories));
-  localStorage.setItem("deletedEntries", JSON.stringify(deletedEntries));
-}
-
-
 function renderCategoryDropdown() {
   const select = document.getElementById("category");
   select.innerHTML = '<option value="">--Select Category--</option>';
@@ -116,6 +108,8 @@ function saveExpenses() {
   localStorage.setItem("expenses", JSON.stringify(expenses));
   localStorage.setItem("categoryLimits", JSON.stringify(categoryLimits));
   localStorage.setItem("categoryKinds", JSON.stringify(categoryKinds));
+  localStorage.setItem("deletedCategories", JSON.stringify(deletedCategories));
+  localStorage.setItem("deletedEntries", JSON.stringify(deletedEntries));
   updateRemainingBudget();
   showHistory();
 }
@@ -960,6 +954,8 @@ function showDeletedEntries() {
 // ✅ Restore a Deleted Entry
 function restoreDeletedEntry(index) {
   const restored = deletedEntries.splice(index, 1)[0];
+  if (!restored) return;
+  delete restored.deletedAt;
   expenses.push(restored);
   saveExpenses();
   closeDeletedEntriesView();
