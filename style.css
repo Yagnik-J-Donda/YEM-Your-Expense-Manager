@@ -3346,10 +3346,6 @@ html.auth-checking body {
 .password-field { position: relative; }
 .password-field input { padding-right: 68px; }
 .password-field .password-toggle { position: absolute; right: 6px; top: 50%; width: auto; min-width: 52px; transform: translateY(-50%); margin: 0; padding: 7px 8px; border: 0; color: #1f5f99; background: transparent; font-size: .82rem; font-weight: 800; }
-.guest-mode-button { margin-top: 2px; }
-.guest-mode-help { margin: -2px 0 0; text-align: center; }
-.guest-mode-badge { position: fixed; right: 16px; bottom: 16px; z-index: 2400; max-width: calc(100vw - 32px); padding: 8px 12px; border: 1px solid #fdb022; border-radius: 999px; background: #fffaeb; color: #7a2e0e; font-size: .78rem; font-weight: 800; box-shadow: 0 5px 16px rgba(16, 24, 40, .14); }
-
 body.yem-tour-open { overflow: hidden; }
 body.yem-tour-open .wrapper { padding-bottom: 55vh; }
 .yem-tour-overlay { position: fixed; inset: 0; z-index: 3000; pointer-events: none; }
@@ -3376,7 +3372,6 @@ body.yem-tour-open .wrapper { padding-bottom: 55vh; }
 .yem-tour-target { scroll-margin-block: 110px; }
 
 @media (max-width: 600px) {
-  .guest-mode-badge { right: 10px; bottom: 10px; font-size: .7rem; }
   .yem-tour-dialog { width: calc(100vw - 20px); max-height: min(62vh, 520px); overflow-y: auto; padding: 18px; border-radius: 15px; }
   .yem-tour-dialog-top { top: 10px; bottom: auto; }
   .yem-tour-dialog-bottom { top: auto; bottom: 10px; }
