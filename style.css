@@ -3345,7 +3345,7 @@ html.auth-checking body {
 .cloud-login-form button:disabled { opacity: .6; cursor: not-allowed; }
 .password-field { position: relative; }
 .password-field input { padding-right: 68px; }
-.password-field .password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); margin: 0; padding: 7px 8px; border: 0; color: #1f5f99; background: transparent; font-size: .82rem; font-weight: 800; }
+.password-field .password-toggle { position: absolute; right: 6px; top: 50%; width: auto; min-width: 52px; transform: translateY(-50%); margin: 0; padding: 7px 8px; border: 0; color: #1f5f99; background: transparent; font-size: .82rem; font-weight: 800; }
 .auth-form-links { display: flex; justify-content: flex-end; margin-top: 2px; }
 .auth-text-button { margin: 0; padding: 4px 0; border: 0; color: #1f5f99; background: transparent; font: inherit; font-weight: 750; cursor: pointer; }
 .auth-field-help { margin: -2px 0 2px; color: #607087; font-size: .8rem; line-height: 1.4; }
