@@ -1857,47 +1857,10 @@ document.addEventListener("DOMContentLoaded", function () {
   renderCategoryDropdown();
   updateRemainingBudget();
 
-  // === Onboarding Check ===
-  const hasSeenOnboarding = localStorage.getItem("onboardingShown");
-  if (!hasSeenOnboarding) {
-    showOnboardingModal();
-  }
-
-  const okBtn = document.getElementById("onboarding-ok-btn");
-  if (okBtn) {
-    okBtn.addEventListener("click", () => {
-      localStorage.setItem("onboardingShown", "true");
-      closeOnboardingModal();
-      this.location.reload(); // Reload to apply changes
-    });
-  }
-
   // === Render Recycle bin ===
   renderRecycleBin();
 
 });
-
-
-
-
-// ✅ Show the onboarding modal
-function showOnboardingModal() {
-  const modal = document.getElementById("onboarding-modal");
-  if (modal) modal.style.display = "flex";
-}
-
-// ✅ Close the onboarding modal
-function closeOnboardingModal() {
-  const modal = document.getElementById("onboarding-modal");
-  if (modal) modal.style.display = "none";
-}
-
-// ✅ Expose for Settings > "❓ Onboarding Again"
-window.showOnboardingModalAgain = function () {
-  localStorage.setItem("onboardingShown", "false");
-  showOnboardingModal();
-
-};
 
 
 

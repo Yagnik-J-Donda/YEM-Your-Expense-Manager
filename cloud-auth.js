@@ -4,6 +4,7 @@
   const config = window.YEM_SUPABASE_CONFIG || {};
   const isConfigured = Boolean(config.url && config.publishableKey);
   const isLoginPage = /(?:^|\/)login\.html$/.test(window.location.pathname);
+  const guestModeKey = "yemGuestMode";
   const modes = {
     signin: ["Welcome back", "Sign in to continue to your expense manager."],
     signup: ["Create your account", "Use your email to create secure YEM access."],
@@ -12,6 +13,10 @@
   };
   let client = null;
   let pendingConfirmationEmail = "";
+
+  function isGuestMode() {
+    return localStorage.getItem(guestModeKey) === "true";
+  }
 
   function safeReturnPath() {
     const requested = new URLSearchParams(window.location.search).get("returnTo");
@@ -78,6 +83,27 @@
     });
   }
 
+  function startGuestMode() {
+    localStorage.setItem(guestModeKey, "true");
+    localStorage.removeItem("yemOnboardingVersion");
+    window.location.replace(safeReturnPath());
+  }
+
+  function activateGuestUI() {
+    document.documentElement.classList.remove("auth-checking");
+    document.body.classList.add("guest-mode");
+    updateAccountUI({ email: "Guest mode" });
+    const badge = document.createElement("div");
+    badge.className = "guest-mode-badge";
+    badge.setAttribute("role", "status");
+    badge.textContent = "Guest mode · data stays in this browser";
+    document.body.appendChild(badge);
+    document.querySelectorAll("[data-auth-signout]").forEach((button) => {
+      button.textContent = "Exit guest mode";
+    });
+    window.dispatchEvent(new CustomEvent("yem:guest-ready"));
+  }
+
   async function requireSession() {
     const { data, error } = await client.auth.getSession();
     if (error || !data.session) return redirectToLogin();
@@ -86,6 +112,11 @@
   }
 
   async function signOut() {
+    if (isGuestMode()) {
+      localStorage.removeItem(guestModeKey);
+      window.location.replace("login.html");
+      return;
+    }
     if (!client) return;
     await client.auth.signOut();
     window.location.replace("login.html");
@@ -93,6 +124,7 @@
 
   function bindSharedControls() {
     document.querySelectorAll("[data-auth-signout]").forEach((button) => button.addEventListener("click", signOut));
+    document.querySelectorAll("[data-guest-start]").forEach((button) => button.addEventListener("click", startGuestMode));
     document.querySelectorAll("[data-auth-mode]").forEach((button) => {
       button.addEventListener("click", () => setMode(button.dataset.authMode));
     });
@@ -128,6 +160,7 @@
         setBusy(signInForm, false);
         return;
       }
+      localStorage.removeItem(guestModeKey);
       window.location.replace(safeReturnPath());
     });
 
@@ -149,7 +182,10 @@
         setBusy(signUpForm, false);
         return;
       }
-      if (data.session) return window.location.replace(safeReturnPath());
+      if (data.session) {
+        localStorage.removeItem(guestModeKey);
+        return window.location.replace(safeReturnPath());
+      }
       pendingConfirmationEmail = email;
       document.getElementById("confirmation-actions").hidden = false;
       showStatus("Account created. Check your email and confirm your address before signing in.", "success");
@@ -216,6 +252,10 @@
 
   async function initialize() {
     bindSharedControls();
+    if (!isLoginPage && isGuestMode()) {
+      activateGuestUI();
+      return;
+    }
     if (!isConfigured || !window.supabase) {
       document.documentElement.classList.remove("auth-checking");
       if (isLoginPage) showSetupMessage();

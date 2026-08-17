@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css?v=20260814-complete-auth" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260814-complete-auth"></script>
+  <script src="guest-storage.js?v=1"></script>
   <script src="cloud-auth.js?v=20260814-complete-auth" defer></script>
 </head>
 <body class="auth-page">
@@ -37,6 +38,8 @@
         </div>
         <div class="auth-form-links"><button type="button" class="auth-text-button" data-auth-mode="forgot">Forgot password?</button></div>
         <button class="auth-primary-button" type="submit">Sign in</button>
+        <button class="auth-secondary-button guest-mode-button" type="button" data-guest-start>Continue as guest</button>
+        <p class="auth-field-help guest-mode-help">Temporary testing mode. Guest data stays only in this browser and can be removed later.</p>
       </form>
 
       <form id="signup-form" class="cloud-login-form" data-auth-panel="signup" hidden>
