@@ -6,6 +6,8 @@ let categoryKinds = JSON.parse(localStorage.getItem("categoryKinds") || "{}");
 let deletedCategories = JSON.parse(localStorage.getItem("deletedCategories") || "[]");
 let currentCategory = null;
 let deletedEntries = JSON.parse(localStorage.getItem("deletedEntries")) || [];
+const HISTORY_VIEW_MODE_KEY = "historyViewMode";
+let historyViewMode = localStorage.getItem(HISTORY_VIEW_MODE_KEY) === "timeline" ? "timeline" : "daily";
 
 
 
@@ -73,17 +75,22 @@ populateYearDropdown();
 // 🔧 Added: Update both budget and history views when month/year changes
 document.getElementById("month-select").addEventListener("change", () => {
   updateRemainingBudget();
-  updateHistory();
+  refreshHistoryView();
 });
 
 document.getElementById("year-select").addEventListener("change", () => {
   updateRemainingBudget();
-  updateHistory();
+  refreshHistoryView();
+});
+
+document.querySelectorAll("[data-history-mode]").forEach(button => {
+  button.addEventListener("click", () => setHistoryViewMode(button.dataset.historyMode));
 });
 
 // 🔧 Added: Show selected date's entries when changed (IT IS A LISTENER)
 document.getElementById("history-date-select").addEventListener("change", (e) => {
   const selectedDate = e.target.value;
+  if (!selectedDate) return;
 
   // ✅ Save the selected date to localStorage
   localStorage.setItem("selectedHistoryDate", selectedDate);
@@ -111,7 +118,7 @@ function saveExpenses() {
   localStorage.setItem("deletedCategories", JSON.stringify(deletedCategories));
   localStorage.setItem("deletedEntries", JSON.stringify(deletedEntries));
   updateRemainingBudget();
-  showHistory();
+  refreshHistoryView();
 }
 
 // ==== Form Submission ====
@@ -195,19 +202,19 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
 
   // ❌ Prevent submission if date/category/amount missing or amount is 0 or negative
   if (!date || !category || isNaN(amount) || amount <= 0) {
-    alert("Please enter a valid amount greater than 0.");
+    yemToast("Please enter a valid amount greater than 0.");
     return;
   }
 
   if (paymentPattern !== "spread" && activeStart && activeEnd && activeStart > activeEnd) {
-    alert("The expense expiry date cannot be before its start date.");
+    yemToast("The expense expiry date cannot be before its start date.");
     return;
   }
 
   const scheduleExpense = paymentPattern === "scheduled";
   if (scheduleExpense) {
     if (typeof window.yemCreateScheduledPayment !== "function") {
-      alert("The scheduled-payment feature could not be loaded. Please refresh and try again.");
+      yemToast("The scheduled-payment feature could not be loaded. Please refresh and try again.");
       return;
     }
     window.yemCreateScheduledPayment({
@@ -235,7 +242,7 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     allocationStartMonth = document.getElementById("allocation-start-month").value;
     allocationMonths = Number(document.getElementById("allocation-months").value);
     if (!/^\d{4}-\d{2}$/.test(allocationStartMonth) || !Number.isInteger(allocationMonths) || allocationMonths < 2 || allocationMonths > 120) {
-      alert("Please enter a valid coverage start and a duration between 2 and 120 months.");
+      yemToast("Please enter a valid coverage start and a duration between 2 and 120 months.");
       return;
     }
   }
@@ -294,7 +301,35 @@ function updateHistory() {
     dateSelect.appendChild(option);
   });
 
-  renderDateHistory(uniqueDates[0]); // Load most recent date by default
+  const savedDate = localStorage.getItem("selectedHistoryDate");
+  const selectedDate = savedDate && uniqueDates.includes(savedDate) ? savedDate : uniqueDates[0];
+  dateSelect.value = selectedDate;
+  localStorage.setItem("selectedHistoryDate", selectedDate);
+  renderDateHistory(selectedDate);
+}
+
+function updateHistoryViewControls() {
+  const dailySelected = historyViewMode === "daily";
+  document.querySelectorAll("[data-history-mode]").forEach(button => {
+    const selected = button.dataset.historyMode === historyViewMode;
+    button.setAttribute("aria-pressed", String(selected));
+    button.classList.toggle("active", selected);
+  });
+  const filterBar = document.getElementById("history-filter-bar");
+  if (filterBar) filterBar.hidden = !dailySelected;
+}
+
+function refreshHistoryView() {
+  updateHistoryViewControls();
+  if (historyViewMode === "timeline") showHistory();
+  else updateHistory();
+}
+
+function setHistoryViewMode(mode) {
+  if (mode !== "daily" && mode !== "timeline") return;
+  historyViewMode = mode;
+  localStorage.setItem(HISTORY_VIEW_MODE_KEY, mode);
+  refreshHistoryView();
 }
 
 function renderDateHistory(dateStr) {
@@ -402,7 +437,7 @@ function restoreCategory(index) {
   updateRemainingBudget();
 
   // Optional confirmation message
-  alert(
+  yemToast(
     monthKey
       ? `Category "${category}" restored for ${monthKey}`
       : `Category "${category}" restored.`
@@ -794,7 +829,7 @@ function viewCategoryExpenses(category) {
 }
 
 // ✅ Edit Expense - Legacy prompt version
-function editExpense(category, dateStr, oldAmount) {
+async function editExpense(category, dateStr, oldAmount) {
   const targetDate = new Date(dateStr);
   const formattedTargetDate = targetDate.toLocaleDateString();
 
@@ -805,21 +840,42 @@ function editExpense(category, dateStr, oldAmount) {
   );
 
   if (!expToEdit) {
-    alert("Expense not found.");
+    yemToast("Expense not found.");
     return;
   }
 
-  const newAmount = prompt("Edit amount:", expToEdit.amount);
+  const newAmount = await yemPrompt({
+    title: "Edit expense amount",
+    message: `Update the amount for ${category}.`,
+    inputLabel: "Amount",
+    inputType: "number",
+    defaultValue: expToEdit.amount,
+    confirmLabel: "Continue"
+  });
   if (newAmount === null || isNaN(newAmount)) return;
 
-  const newDetails = prompt("Edit details (optional):", expToEdit.details || "");
+  const newDetails = await yemPrompt({
+    title: "Edit expense details",
+    message: "Update the description or leave it blank.",
+    inputLabel: "Details",
+    defaultValue: expToEdit.details || "",
+    confirmLabel: "Continue"
+  });
+  if (newDetails === null) return;
 
   const currentDateTime = new Date(expToEdit.date).toISOString().slice(0, 16);
-  const newDateTime = prompt("Edit date and time (YYYY-MM-DDTHH:MM):", currentDateTime);
+  const newDateTime = await yemPrompt({
+    title: "Edit expense date and time",
+    message: "Choose the date and time for this expense.",
+    inputLabel: "Date and time",
+    inputType: "datetime-local",
+    defaultValue: currentDateTime,
+    confirmLabel: "Save expense"
+  });
 
   const newDate = newDateTime ? new Date(newDateTime) : null;
   if (!newDate || isNaN(newDate.getTime())) {
-    alert("Invalid date/time format.");
+    yemToast("Invalid date/time format.");
     return;
   }
 
@@ -843,7 +899,7 @@ function openEditExpenseModal(category, dateStr, amount) {
   );
 
   if (index === -1) {
-    alert("Expense not found.");
+    yemToast("Expense not found.");
     return;
   }
 
@@ -891,8 +947,13 @@ document.getElementById("edit-allocation-start-month").addEventListener("input",
 document.getElementById("edit-allocation-months").addEventListener("input", updateEditAllocationPreview);
 
 // ✅ Delete (Soft Delete) to deletedEntries[]
-function deleteCurrentExpense() {
-  if (!confirm("Are you sure you want to delete this entry? It will be moved to the Recycle Bin.")) return;
+async function deleteCurrentExpense() {
+  if (!await yemConfirm({
+    title: "Delete expense entry?",
+    message: "This entry will be moved to the Recycle Bin and can be restored later.",
+    confirmLabel: "Move to Recycle Bin",
+    danger: true
+  })) return;
 
   const index = parseInt(document.getElementById("edit-index").value);
 
@@ -903,14 +964,14 @@ function deleteCurrentExpense() {
     closeEditModal();
     viewCategoryExpenses(currentCategory);
   } else {
-    alert("Invalid expense entry.");
+    yemToast("Invalid expense entry.");
   }
 }
 
 // ✅ Show Deleted Entries Modal
 function showDeletedEntries() {
   if (deletedEntries.length === 0) {
-    alert("No deleted entries found.");
+    yemToast("No deleted entries found.");
     return;
   }
 
@@ -965,7 +1026,7 @@ function restoreDeletedEntry(index) {
 // ✅ Show Deleted Category Modal
 function showDeletedCategories() {
   if (deletedCategories.length === 0) {
-    alert("No deleted categories found.");
+    yemToast("No deleted categories found.");
     return;
   }
 
@@ -1064,10 +1125,14 @@ function closeEditModal() {
 }
 
 
-document.getElementById("edit-expense-form").addEventListener("submit", function(e) {
+document.getElementById("edit-expense-form").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  if (!confirm("Are you sure you want to save these changes?")) return;
+  if (!await yemConfirm({
+    title: "Save expense changes?",
+    message: "The updated expense details will replace the current values.",
+    confirmLabel: "Save changes"
+  })) return;
 
   const index = parseInt(document.getElementById("edit-index").value);
   const newDate = new Date(document.getElementById("edit-date").value);
@@ -1080,19 +1145,19 @@ document.getElementById("edit-expense-form").addEventListener("submit", function
   const activeEnd = document.getElementById("edit-expense-end-date").value;
 
   if (isNaN(newAmount) || isNaN(newDate.getTime())) {
-    alert("Invalid input.");
+    yemToast("Invalid input.");
     return;
   }
 
   if (paymentPattern !== "spread" && activeStart && activeEnd && activeStart > activeEnd) {
-    alert("The expense expiry date cannot be before its start date.");
+    yemToast("The expense expiry date cannot be before its start date.");
     return;
   }
 
   const allocationStartMonth = paymentPattern === "spread" ? document.getElementById("edit-allocation-start-month").value : "";
   const allocationMonths = paymentPattern === "spread" ? Number(document.getElementById("edit-allocation-months").value) : 0;
   if (paymentPattern === "spread" && (!/^\d{4}-\d{2}$/.test(allocationStartMonth) || !Number.isInteger(allocationMonths) || allocationMonths < 2 || allocationMonths > 120)) {
-    alert("Please enter valid allocation details.");
+    yemToast("Please enter valid allocation details.");
     return;
   }
 
@@ -1155,6 +1220,11 @@ function showHistory(keepOpen = false) {
     const dateB = new Date(`${b} 01`);
     return sortDescending ? dateB - dateA : dateA - dateB;
   });
+
+  if (monthKeys.length === 0) {
+    historyView.innerHTML = `<p class="history-empty-state">No history available.</p>`;
+    return;
+  }
 
   monthKeys.forEach((month) => {
     const details = document.createElement("details");
@@ -1270,7 +1340,7 @@ backToDatesBtn.onclick = () => {
 
   const monthData = grouped[monthKeyForBackBtn];
   if (!monthData) {
-    alert("⚠️ Could not find entries for this month.");
+    yemToast("⚠️ Could not find entries for this month.");
     return;
   }
 
@@ -1489,7 +1559,7 @@ function importData(event) {
       const imported = JSON.parse(e.target.result);
 
       if (!imported.expenses || !Array.isArray(imported.expenses)) {
-        return alert("❌ Invalid file format: missing 'expenses'.");
+        return yemToast("❌ Invalid file format: missing 'expenses'.");
       }
 
       let newEntries = 0;
@@ -1555,16 +1625,16 @@ function importData(event) {
       if (newEntries > 0 || imported.categoryLimits) {
         renderCategoryDropdown();
         updateRemainingBudget();
-        showHistory();
+        refreshHistoryView();
 
-        alert(`✅ Backup imported successfully. ${newEntries} new expense entries were added.`);
+        yemToast(`✅ Backup imported successfully. ${newEntries} new expense entries were added.`);
       } else {
-        alert("⚠️ All entries in the file already exist. No duplicates added.");
+        yemToast("⚠️ All entries in the file already exist. No duplicates added.");
       }
 
     } catch (err) {
       console.error(err);
-      alert("❌ Error reading or parsing the file.");
+      yemToast("❌ Error reading or parsing the file.");
     }
   };
 
@@ -1574,49 +1644,67 @@ function importData(event) {
 
 
 // ==== Reset Function ====
-function resetAllData() {
-  const wantBackup = confirm("Do you want to export a backup before resetting all data?");
-  if (wantBackup) exportData();
+async function resetAllData() {
+  const wantBackup = await yemConfirm({
+    title: "Export a backup first?",
+    message: "Resetting removes all locally stored YEM data. You can download a backup before continuing.",
+    confirmLabel: "Export backup",
+    cancelLabel: "Continue without backup"
+  });
+  if (wantBackup) await exportData();
 
-  const confirmed = confirm("Are you sure you want to reset all data?");
+  const confirmed = await yemConfirm({
+    title: "Reset all YEM data?",
+    message: "All locally stored expenses, income and category information will be removed. This action cannot be undone without a backup.",
+    confirmLabel: "Reset all data",
+    danger: true
+  });
   if (confirmed) {
     localStorage.removeItem("expenses");
     expenses = [];
     undoStack = [];
     updateRemainingBudget();
     document.getElementById("history-view").innerHTML = "";
-    alert("All data has been reset.");
+    yemToast("All data has been reset.");
   }
 }
 
 // ==== Undo/Redo Functions ====
-function undoLastEntry() {
-  if (!expenses.length) return alert("No entries to undo.");
+async function undoLastEntry() {
+  if (!expenses.length) return yemToast("No entries to undo.");
   const last = expenses.at(-1);
-  const confirmUndo = confirm(`Undo this entry?\nDate: ${new Date(last.date).toLocaleString()}\nCategory: ${last.category}\nAmount: $${last.amount.toFixed(2)}`);
+  const confirmUndo = await yemConfirm({
+    title: "Undo the last entry?",
+    message: `Date: ${new Date(last.date).toLocaleString()}\nCategory: ${last.category}\nAmount: $${last.amount.toFixed(2)}`,
+    confirmLabel: "Undo entry"
+  });
   if (confirmUndo) {
     undoStack.push(expenses.pop());
     saveExpenses();
-    alert("Last entry has been undone.");
+    yemToast("Last entry has been undone.");
   }
 }
 
 function redoLastEntry() {
-  if (!undoStack.length) return alert("No entry to redo.");
+  if (!undoStack.length) return yemToast("No entry to redo.");
   expenses.push(undoStack.pop());
   saveExpenses();
-  alert("Last undone entry has been restored.");
+  yemToast("Last undone entry has been restored.");
 }
 
-updateHistory(); // add this line after it
+refreshHistoryView();
 
 // 🧩 1. Opens the edit modal for a variable category
-function openCategoryEditModal(category) {
+async function openCategoryEditModal(category) {
   const kind = categoryKinds[category];
 
   // ✅ Ask for confirmation instead of blocking
   if (kind === "Fixed") {
-    const confirmEdit = confirm(`"${category}" is a Fixed category.\nAre you sure you want to edit it?`);
+    const confirmEdit = await yemConfirm({
+      title: "Edit fixed category?",
+      message: `"${category}" is a fixed category. Changes may affect its projected budget.`,
+      confirmLabel: "Edit category"
+    });
     if (!confirmEdit) return;
   }
 
@@ -1633,13 +1721,13 @@ function applyCategoryEdit() {
   const newLimit = parseFloat(document.getElementById("edit-type-limit").value);
 
   if (!newName || isNaN(newLimit) || newLimit < 0) {
-    alert("Please enter a valid name and limit.");
+    yemToast("Please enter a valid name and limit.");
     return;
   }
 
   if (newName !== categoryBeingEdited) {
     if (categoryLimits[newName]) {
-      alert("This category name already exists.");
+      yemToast("This category name already exists.");
       return;
     }
 
@@ -1681,12 +1769,17 @@ function closeCategoryEditModal() {
 }
 
 // 🧩 3. Deletes the category edit modal
-function deleteCategory() {
+async function deleteCategory() {
   const category = categoryBeingEdited;
   if (!category) return;
 
   const selectedMonthKey = getMonthKeyFromDate(new Date().toISOString());
-  const confirmDelete = confirm(`Are you sure you want to delete the category "${category}" for the selected month?`);
+  const confirmDelete = await yemConfirm({
+    title: "Delete category?",
+    message: `Delete "${category}" for the selected month?`,
+    confirmLabel: "Delete category",
+    danger: true
+  });
 
   if (!confirmDelete) return;
 
@@ -1705,7 +1798,7 @@ function deleteCategory() {
   renderRecycleBin();
   closeCategoryEditModal();
 
-  alert(`Category "${category}" deleted successfully for the selected month.`);
+  yemToast(`Category "${category}" deleted successfully for the selected month.`);
 }
 
 
@@ -1841,17 +1934,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("confirm-edit-fixed-modal").style.display = "none";
   }
 
-  // === Restore Selected History Date ===
-  const savedHistoryDate = localStorage.getItem("selectedHistoryDate");
-  const historyDropdown = document.getElementById("history-date-select");
-
-  if (savedHistoryDate && [...historyDropdown.options].some(opt => opt.value === savedHistoryDate)) {
-    historyDropdown.value = savedHistoryDate;
-    renderDateHistory(savedHistoryDate);
-  } else if (historyDropdown.value) {
-    const latest = historyDropdown.value;
-    renderDateHistory(latest);
-  }
+  // === Restore Selected History View and Date ===
+  refreshHistoryView();
 
   // === Render Initial Data ===
   renderCategoryDropdown();
@@ -1876,12 +1960,12 @@ document.addEventListener("DOMContentLoaded", function () {
   //   const limit = parseFloat(document.getElementById("new-type-limit").value);
 
   //   if (!name || isNaN(limit) || limit < 0) {
-  //     alert("Please enter a valid name and limit.");
+  //     yemToast("Please enter a valid name and limit.");
   //     return;
   //   }
 
   //   if (categoryLimits[name]) {
-  //     alert("This category already exists.");
+  //     yemToast("This category already exists.");
   //     return;
   //   }
 
@@ -1908,12 +1992,12 @@ if (categoryForm) {
     );
 
     if (!name || isNaN(limit) || limit < 0) {
-      alert("Please enter a valid name and limit.");
+      yemToast("Please enter a valid name and limit.");
       return;
     }
 
     if (categoryLimits[name]) {
-      alert("This category already exists.");
+      yemToast("This category already exists.");
       return;
     }
 
@@ -1983,7 +2067,7 @@ if (categoryForm) {
 //   window.tempNewType = null;
 
 //   // ✅ Feedback (optional)
-//   alert(`✅ "${name}" (${kind}) added with $${limit.toFixed(2)} limit.`);
+//   yemToast(`✅ "${name}" (${kind}) added with $${limit.toFixed(2)} limit.`);
 // });
 
 const confirmAddBtn = document.getElementById("confirm-add-type-btn");
@@ -2035,7 +2119,7 @@ if (confirmAddBtn) {
     // Clear temporary category
     window.tempNewType = null;
 
-    alert(
+    yemToast(
       `✅ "${name}" (${kind}) added with $${limit.toFixed(2)} limit.`
     );
   });
@@ -2269,4 +2353,4 @@ saveExpenses();   // Already present
 populateYearDropdown(); // Make sure it's called here
 document.getElementById("month-select").value = new Date().getMonth(); // ✅ Set current month
 updateRemainingBudget();
-updateHistory();
+refreshHistoryView();

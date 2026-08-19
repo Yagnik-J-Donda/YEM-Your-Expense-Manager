@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css?v=20260811-entry-dialogs" />
+  <link rel="stylesheet" href="style.css?v=20260819-user-menu" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260814-complete-auth"></script>
-  <script src="cloud-auth.js?v=20260814-complete-auth" defer></script>
+  <script src="cloud-auth.js?v=20260819-user-menu" defer></script>
 </head>
 <body class="main-body">
 
@@ -22,8 +22,8 @@
     <a href="categories.html" data-tour="categories">Categories</a>
     <a href="recycle-bin.html">Recycle Bin</a>
     <details class="account-menu">
-      <summary><span aria-hidden="true">👤</span> <span data-auth-email>Account</span></summary>
-      <div class="account-menu-panel"><button type="button" data-auth-signout>Sign out</button></div>
+      <summary><span class="account-avatar" aria-hidden="true">Y</span><span class="account-identity"><span class="account-username" data-auth-username>Account</span><span class="account-email" data-auth-email></span></span></summary>
+      <div class="account-menu-panel"><div class="account-menu-caption">Account</div><button type="button" data-auth-signout><span aria-hidden="true">↪</span> Sign out</button></div>
     </details>
     <button type="button" id="notification-center-button" class="notification-center-button" aria-label="Open notification center" data-tour="notifications">
       <span aria-hidden="true">🔔</span><span>Notifications</span><span id="notification-count" class="notification-count" hidden>0</span>
@@ -253,29 +253,19 @@
     <hr class="section-divider" />
     <div class="history-heading-row" data-tour="history">
       <h2>History</h2>
-      <button type="button" id="open-entry-search" class="search-entry-button">🔍 Search Entries</button>
+      <div class="history-heading-actions">
+        <div class="history-view-toggle" role="group" aria-label="History view">
+          <button type="button" id="history-daily-view" data-history-mode="daily" aria-pressed="true">📅 Daily</button>
+          <button type="button" id="history-timeline-view" data-history-mode="timeline" aria-pressed="false">🗂️ Timeline</button>
+        </div>
+        <button type="button" id="open-entry-search" class="search-entry-button">🔍 Search Entries</button>
+      </div>
     </div>
-    <div id="history-filter-bar" style="text-align: center; margin-bottom: 10px;">
+    <div id="history-filter-bar" class="history-filter-bar">
       <label for="history-date-select" style="font-weight: bold;">Select Date:</label>
       <select id="history-date-select"></select>
     </div>
-    <div id="history-view" class="history-container">
-  <div class="table-wrapper">
-    <table id="history-table">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Category</th>
-          <th>Amount ($)</th>
-          <th>Details</th>
-        </tr>
-      </thead>
-      <tbody id="history-tbody">
-        <!-- JS will populate rows -->
-      </tbody>
-    </table>
-  </div>
-</div>
+    <div id="history-view" class="history-container"></div>
     </section>
 
   </div>
@@ -610,12 +600,13 @@ scrollToTopBtn.addEventListener("click", () => {
 
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
-<script src="script.js?v=20260811-income-planning"></script>
-<script src="enhancements.js?v=20260811-income-planning"></script>
-<script src="scheduled-payments.js?v=20260810-prepaid-allocation"></script>
-<script src="category-suggester.js?v=20260806-personal-category-suggestions2"></script>
-<script src="income.js?v=20260811-income-planning"></script>
-<script src="entry-dialogs.js?v=20260811-entry-dialogs"></script>
+<script src="ui-feedback.js?v=20260819-consistent-dialogs"></script>
+<script src="script.js?v=20260819-consistent-dialogs"></script>
+<script src="enhancements.js?v=20260819-consistent-dialogs"></script>
+<script src="scheduled-payments.js?v=20260819-consistent-dialogs"></script>
+<script src="category-suggester.js?v=20260819-consistent-dialogs"></script>
+<script src="income.js?v=20260819-consistent-dialogs"></script>
+<script src="entry-dialogs.js?v=20260819-consistent-dialogs"></script>
 <script src="onboarding.js?v=1"></script>
 <script src="footer.js?v=20260811-portfolio-credit"></script>
 <script src="viewToggle.js"></script>

@@ -277,8 +277,13 @@ function addProjectionRow(item = {}) {
   remove.type = "button";
   remove.className = "delete-category-button projection-remove";
   remove.textContent = "Remove";
-  remove.addEventListener("click", () => {
-    if (confirm(`Remove the projection "${title.value || "Untitled"}"?`)) row.remove();
+  remove.addEventListener("click", async () => {
+    if (await yemConfirm({
+      title: "Remove projection?",
+      message: `Remove the projection "${title.value || "Untitled"}"?`,
+      confirmLabel: "Remove projection",
+      danger: true
+    })) row.remove();
   });
   const sync = () => {
     day.disabled = variable.checked;
@@ -352,19 +357,19 @@ categoryForm.addEventListener("submit", event => {
     date: new Date().toISOString().slice(0, 10)
   } : null;
   if (!name || Object.prototype.hasOwnProperty.call(categoryLimits, name)) {
-    alert(name ? "This category already exists." : "Please enter a category name.");
+    yemToast(name ? "This category already exists." : "Please enter a category name.");
     return;
   }
   if (!validateRange(startDate, endDate)) {
-    alert("The active-until date cannot be before the active-from date.");
+    yemToast("The active-until date cannot be before the active-from date.");
     return;
   }
   if (mode === "allowance" && (!Number.isFinite(allowance) || allowance < 0)) {
-    alert("Please enter a valid monthly allowance.");
+    yemToast("Please enter a valid monthly allowance.");
     return;
   }
   if (mode === "projections" && !validProjections([projection])) {
-    alert("Please complete the projected expense, amount, schedule and dates correctly.");
+    yemToast("Please complete the projected expense, amount, schedule and dates correctly.");
     return;
   }
   window.tempNewType = { name, kind, mode, allowance, projection, startDate, endDate, unlimited };
@@ -405,7 +410,7 @@ confirmAddButton.addEventListener("click", () => {
   renderCategoryManagementList();
 });
 
-editCategoryForm.addEventListener("submit", event => {
+editCategoryForm.addEventListener("submit", async event => {
   event.preventDefault();
   if (!categoryBeingEdited) return;
   const oldName = categoryBeingEdited;
@@ -418,21 +423,25 @@ editCategoryForm.addEventListener("submit", event => {
   const endDate = unlimited ? "" : document.getElementById("edit-category-end").value;
   const projections = mode === "projections" ? collectProjectionRows() : [];
   if (!newName || (newName !== oldName && Object.prototype.hasOwnProperty.call(categoryLimits, newName))) {
-    alert(newName ? "Another category already uses this name." : "Please enter a category name.");
+    yemToast(newName ? "Another category already uses this name." : "Please enter a category name.");
     return;
   }
   if (mode === "allowance" && (!Number.isFinite(allowance) || allowance < 0 || !validateRange(startDate, endDate))) {
-    alert("Please enter a valid allowance and active period.");
+    yemToast("Please enter a valid allowance and active period.");
     return;
   }
   if (mode === "projections" && !validProjections(projections)) {
-    alert("Each projection needs a name, valid amount, schedule and valid active period.");
+    yemToast("Each projection needs a name, valid amount, schedule and valid active period.");
     return;
   }
   snapshotCategoryHistory(oldName);
   const wasHidden = categoryVisibility[oldName] === "hidden";
   if (wasHidden && (mode === "allowance" ? allowance > 0 : projections.some(item => item.amount > 0))) {
-    if (confirm(`"${newName}" was hidden from the budget table. Show it again with these active budget settings?`)) categoryVisibility[oldName] = "visible";
+    if (await yemConfirm({
+      title: "Show category again?",
+      message: `"${newName}" was hidden from the budget table. Show it again with these active budget settings?`,
+      confirmLabel: "Show category"
+    })) categoryVisibility[oldName] = "visible";
   }
   categoryKinds[newName] = kind;
   categoryBudgetModes[newName] = mode;
@@ -460,10 +469,15 @@ editCategoryForm.addEventListener("submit", event => {
   renderCategoryManagementList();
 });
 
-function deleteCategory() {
+async function deleteCategory() {
   if (!categoryBeingEdited) return;
   const name = categoryBeingEdited;
-  if (!confirm(`Delete "${name}"? Existing expense records will remain saved.`)) return;
+  if (!await yemConfirm({
+    title: "Delete category?",
+    message: `Delete "${name}"? Existing expense records will remain saved and the category can be restored from the Recycle Bin.`,
+    confirmLabel: "Delete category",
+    danger: true
+  })) return;
   snapshotCategoryHistory(name);
   deletedCategories.push({
     category: name,

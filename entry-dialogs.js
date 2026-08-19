@@ -11,7 +11,10 @@
 
   function snapshot(form) {
     if (!form) return "";
-    return JSON.stringify([...new FormData(form).entries()]);
+    return JSON.stringify([...form.querySelectorAll("input, select, textarea")].map(field => ({
+      key: field.name || field.id || field.type,
+      value: field.type === "checkbox" || field.type === "radio" ? field.checked : field.value
+    })));
   }
 
   function open(dialogId) {
@@ -29,9 +32,15 @@
     return snapshot(formFor(dialog)) !== openingSnapshot;
   }
 
-  function requestClose(dialog = activeDialog) {
+  async function requestClose(dialog = activeDialog) {
     if (!dialog || dialog.hidden) return;
-    if (isDirty(dialog) && !confirm("Discard the information you entered?\n\nChoose OK to discard it, or Cancel to continue entering the entry.")) return;
+    if (isDirty(dialog) && !await yemConfirm({
+      title: "Discard this entry?",
+      message: "The information entered in this form has not been saved.",
+      confirmLabel: "Discard entry",
+      cancelLabel: "Continue editing",
+      danger: true
+    })) return;
     close(dialog);
   }
 

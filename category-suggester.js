@@ -158,9 +158,13 @@
         const use = document.createElement("button");
         use.type = "button";
         use.textContent = `Use ${suggestion.category}`;
-        use.addEventListener("click", () => {
+        use.addEventListener("click", async () => {
           onChoose(suggestion.category);
-          if (confirm(`Remember "${input.trim()}" as "${suggestion.category}" for future suggestions?`)) {
+          if (await yemConfirm({
+            title: "Remember category preference?",
+            message: `Remember "${input.trim()}" as "${suggestion.category}" for future suggestions?`,
+            confirmLabel: "Remember"
+          })) {
             mappings[query] = suggestion.category;
             localStorage.setItem("itemCategoryMappings", JSON.stringify(mappings));
           }
@@ -211,8 +215,13 @@
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "Remove";
-      remove.addEventListener("click", () => {
-        if (!confirm(`Remove the saved preference "${item}" → "${category}"?`)) return;
+      remove.addEventListener("click", async () => {
+        if (!await yemConfirm({
+          title: "Remove saved preference?",
+          message: `Remove the saved preference "${item}" → "${category}"?`,
+          confirmLabel: "Remove",
+          danger: true
+        })) return;
         delete mappings[item];
         localStorage.setItem("itemCategoryMappings", JSON.stringify(mappings));
         renderPreferences(container);

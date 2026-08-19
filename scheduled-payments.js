@@ -155,9 +155,14 @@
     yemOpenFeatureModal(document.getElementById("scheduled-approval-modal"));
   }
 
-  function skipOccurrence(notificationId) {
+  async function skipOccurrence(notificationId) {
     const notification = notifications.find(item => item.id === notificationId);
-    if (!notification || !confirm("Skip this occurrence? No expense will be posted. Future monthly occurrences will remain scheduled.")) return;
+    if (!notification || !await yemConfirm({
+      title: "Skip this occurrence?",
+      message: "No expense will be posted for this occurrence. Future monthly occurrences will remain scheduled.",
+      confirmLabel: "Skip occurrence",
+      danger: true
+    })) return;
     occurrences[notification.occurrenceId] = { status: "skipped", dueDate: notification.dueDate, decidedAt: new Date().toISOString() };
     removeOccurrenceNotifications(notification.occurrenceId);
     save(); renderNotifications();
@@ -189,7 +194,7 @@
     save();
     generateNotifications();
     renderNotifications();
-    alert(`Scheduled expense saved for day ${plan.scheduledDay} of each month. It will not count as spent until you approve an occurrence.`);
+    yemToast(`Scheduled expense saved for day ${plan.scheduledDay} of each month. It will not count as spent until you approve an occurrence.`);
   };
 
   document.getElementById("notification-center-button").addEventListener("click", () => {
@@ -205,10 +210,10 @@
     const actualDate = document.getElementById("approval-actual-date").value;
     const actualAmount = Number(document.getElementById("approval-actual-amount").value);
     const paymentMethod = document.getElementById("approval-payment-method").value;
-    if (!actualDate || !Number.isFinite(actualAmount) || actualAmount <= 0) return alert("Enter a valid deduction date and amount.");
+    if (!actualDate || !Number.isFinite(actualAmount) || actualAmount <= 0) return yemToast("Enter a valid deduction date and amount.");
     if (expenses.some(item => item.scheduledOccurrenceId === notification.occurrenceId)) {
       removeOccurrenceNotifications(notification.occurrenceId); save();
-      return alert("This scheduled occurrence has already been posted.");
+      return yemToast("This scheduled occurrence has already been posted.");
     }
     const statement = document.getElementById("approval-statement-description").value.trim();
     const notes = document.getElementById("approval-notes").value.trim();
@@ -230,7 +235,7 @@
     removeOccurrenceNotifications(notification.occurrenceId);
     save(); saveExpenses();
     yemCloseFeatureModals();
-    alert("Expense approved and posted using the actual deduction date.");
+    yemToast("Expense approved and posted using the actual deduction date.");
     location.reload();
   });
 

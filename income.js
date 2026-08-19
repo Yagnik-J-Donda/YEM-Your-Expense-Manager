@@ -62,19 +62,31 @@
     return button;
   }
 
-  function editEntry(entryId) {
+  async function editEntry(entryId) {
     const item = entries.find(value => value.id === entryId);
     if (!item) return;
-    const amount = prompt(`Amount received from ${item.source}:`, item.amount);
+    const amount = await yemPrompt({
+      title: "Edit income amount",
+      message: `Update the amount received from ${item.source}.`,
+      inputLabel: "Amount received",
+      inputType: "number",
+      defaultValue: item.amount,
+      confirmLabel: "Save amount"
+    });
     if (amount === null) return;
     const parsed = Number(amount);
-    if (!Number.isFinite(parsed) || parsed <= 0) return alert("Enter a valid amount greater than zero.");
+    if (!Number.isFinite(parsed) || parsed <= 0) return yemToast("Enter a valid amount greater than zero.");
     item.amount = parsed;
     save(); render(); updateRemainingBudget();
   }
 
-  function deleteEntry(entryId) {
-    if (!confirm("Delete this income entry? This cannot be undone.")) return;
+  async function deleteEntry(entryId) {
+    if (!await yemConfirm({
+      title: "Delete income entry?",
+      message: "This income entry will be permanently removed.",
+      confirmLabel: "Delete entry",
+      danger: true
+    })) return;
     entries = entries.filter(item => item.id !== entryId);
     save(); render(); updateRemainingBudget();
   }

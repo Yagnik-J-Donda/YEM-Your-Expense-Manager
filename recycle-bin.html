@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recycle Bin | YEM</title>
-  <link rel="stylesheet" href="style.css?v=20260811-shared-header" />
+  <link rel="stylesheet" href="style.css?v=20260819-user-menu" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260814-complete-auth"></script>
-  <script src="cloud-auth.js?v=20260814-complete-auth" defer></script>
+  <script src="cloud-auth.js?v=20260819-user-menu" defer></script>
 </head>
 <body class="recycle-bin-body">
   <header class="yem-navbar secondary-navbar">
@@ -16,9 +16,9 @@
       <a href="index.html">Home</a>
       <a href="categories.html">Categories</a>
       <a href="recycle-bin.html" class="active" aria-current="page">Recycle Bin</a>
-      <details class="account-menu">
-        <summary><span aria-hidden="true">👤</span> <span data-auth-email>Account</span></summary>
-        <div class="account-menu-panel"><button type="button" data-auth-signout>Sign out</button></div>
+    <details class="account-menu">
+      <summary><span class="account-avatar" aria-hidden="true">Y</span><span class="account-identity"><span class="account-username" data-auth-username>Account</span><span class="account-email" data-auth-email></span></span></summary>
+      <div class="account-menu-panel"><div class="account-menu-caption">Account</div><button type="button" data-auth-signout><span aria-hidden="true">↪</span> Sign out</button></div>
       </details>
     </nav>
   </header>

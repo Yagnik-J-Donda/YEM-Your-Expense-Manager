@@ -13,6 +13,22 @@
   let client = null;
   let pendingConfirmationEmail = "";
 
+  function usernameFromUserId(userId) {
+    const hex = String(userId || "").replace(/-/g, "").toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(hex)) return "yem-user";
+    const bytes = hex.match(/.{2}/g).map((pair) => String.fromCharCode(parseInt(pair, 16)));
+    return `yem_${btoa(bytes.join(""))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "")}`;
+  }
+
+  function usernameFor(user) {
+    return user && user.user_metadata && user.user_metadata.username
+      ? user.user_metadata.username
+      : usernameFromUserId(user && user.id);
+  }
+
   function safeReturnPath() {
     const requested = new URLSearchParams(window.location.search).get("returnTo");
     if (!requested || requested.includes(":") || requested.startsWith("//")) return "index.html";
@@ -73,16 +89,28 @@
   }
 
   function updateAccountUI(user) {
+    const username = usernameFor(user);
+    document.querySelectorAll("[data-auth-username]").forEach((element) => {
+      element.textContent = username;
+      element.title = username;
+    });
     document.querySelectorAll("[data-auth-email]").forEach((element) => {
       element.textContent = user && user.email ? user.email : "Account";
     });
+  }
+
+  async function ensureUsername(user) {
+    if (!user || (user.user_metadata && user.user_metadata.username)) return user;
+    const username = usernameFromUserId(user.id);
+    const { data, error } = await client.auth.updateUser({ data: { username } });
+    return error || !data.user ? user : data.user;
   }
 
   async function requireSession() {
     const { data, error } = await client.auth.getSession();
     if (error || !data.session) return redirectToLogin();
     document.documentElement.classList.remove("auth-checking");
-    updateAccountUI(data.session.user);
+    updateAccountUI(await ensureUsername(data.session.user));
   }
 
   async function signOut() {
@@ -93,6 +121,18 @@
 
   function bindSharedControls() {
     document.querySelectorAll("[data-auth-signout]").forEach((button) => button.addEventListener("click", signOut));
+    const menus = [...document.querySelectorAll("details.account-menu, details.header-actions")];
+    menus.forEach((menu) => {
+      menu.addEventListener("toggle", () => {
+        if (!menu.open) return;
+        menus.forEach((other) => { if (other !== menu) other.open = false; });
+      });
+    });
+    document.addEventListener("pointerdown", (event) => {
+      menus.forEach((menu) => {
+        if (menu.open && !menu.contains(event.target)) menu.open = false;
+      });
+    });
     document.querySelectorAll("[data-auth-mode]").forEach((button) => {
       button.addEventListener("click", () => setMode(button.dataset.authMode));
     });
@@ -149,7 +189,10 @@
         setBusy(signUpForm, false);
         return;
       }
-      if (data.session) return window.location.replace(safeReturnPath());
+      if (data.session) {
+        await ensureUsername(data.session.user);
+        return window.location.replace(safeReturnPath());
+      }
       pendingConfirmationEmail = email;
       document.getElementById("confirmation-actions").hidden = false;
       showStatus("Account created. Check your email and confirm your address before signing in.", "success");
@@ -229,7 +272,7 @@
     await requireSession();
     client.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) redirectToLogin();
-      else updateAccountUI(session.user);
+      else ensureUsername(session.user).then(updateAccountUI);
     });
   }
 

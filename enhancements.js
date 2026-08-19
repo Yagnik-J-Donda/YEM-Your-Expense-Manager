@@ -97,35 +97,52 @@ function yemBudgetInfo(category, month, year) {
   };
 }
 
-function yemReviewDormantVisibility(month, year) {
-  if (!yemIsCurrentMonth(month, year)) return;
+let yemVisibilityReviewRunning = false;
+
+async function yemReviewDormantVisibility(month, year) {
+  if (!yemIsCurrentMonth(month, year) || yemVisibilityReviewRunning) return;
+  yemVisibilityReviewRunning = true;
   const monthStart = new Date(year, month, 1);
   let changed = false;
   const reviewKey = `${year}-${String(month + 1).padStart(2, "0")}`;
-  Object.keys(categoryLimits).forEach(category => {
-    const info = yemBudgetInfo(category, month, year);
-    if (yemCategoryVisibility[category] === "hidden" && info.amount > 0) {
-      if (yemVisibilityReviews[category] === reviewKey) return;
-      const show = confirm(`"${category}" has active budget plans again. Show it in the Remaining Budget table?`);
-      if (show) yemCategoryVisibility[category] = "visible";
-      else yemVisibilityReviews[category] = reviewKey;
+  try {
+    for (const category of Object.keys(categoryLimits)) {
+      const info = yemBudgetInfo(category, month, year);
+      if (yemCategoryVisibility[category] === "hidden" && info.amount > 0) {
+        if (yemVisibilityReviews[category] === reviewKey) continue;
+        const show = await yemConfirm({
+          title: "Show active category?",
+          message: `"${category}" has active budget plans again. Show it in the Remaining Budget table?`,
+          confirmLabel: "Show category"
+        });
+        if (show) yemCategoryVisibility[category] = "visible";
+        else yemVisibilityReviews[category] = reviewKey;
+        changed = true;
+        continue;
+      }
+      if (yemCategoryVisibility[category] && yemCategoryVisibility[category] !== "visible") continue;
+      if (info.amount > 0 || info.grace) continue;
+      const mode = yemCategoryBudgetModes[category] === "projections" ? "projections" : "allowance";
+      const endDates = mode === "projections"
+        ? (yemCategoryProjections[category] || []).map(item => yemParseDateOnly(item.endDate)).filter(Boolean)
+        : [yemParseDateOnly((yemCategoryMeta[category] || {}).endDate)].filter(Boolean);
+      if (!endDates.length || endDates.some(end => end >= monthStart)) continue;
+      const hide = await yemConfirm({
+        title: "Hide inactive category?",
+        message: `"${category}" has no active budget plans. Hide it from current and future Remaining Budget tables?`,
+        confirmLabel: "Hide category",
+        cancelLabel: "Keep visible"
+      });
+      yemCategoryVisibility[category] = hide ? "hidden" : "keep";
       changed = true;
-      return;
     }
-    if (yemCategoryVisibility[category] && yemCategoryVisibility[category] !== "visible") return;
-    if (info.amount > 0 || info.grace) return;
-    const mode = yemCategoryBudgetModes[category] === "projections" ? "projections" : "allowance";
-    const endDates = mode === "projections"
-      ? (yemCategoryProjections[category] || []).map(item => yemParseDateOnly(item.endDate)).filter(Boolean)
-      : [yemParseDateOnly((yemCategoryMeta[category] || {}).endDate)].filter(Boolean);
-    if (!endDates.length || endDates.some(end => end >= monthStart)) return;
-    const hide = confirm(`"${category}" has no active budget plans. Hide it from current and future Remaining Budget tables?\n\nChoose Cancel to keep it visible at $0.`);
-    yemCategoryVisibility[category] = hide ? "hidden" : "keep";
-    changed = true;
-  });
-  if (changed) {
-    localStorage.setItem("categoryVisibility", JSON.stringify(yemCategoryVisibility));
-    localStorage.setItem("categoryVisibilityReviews", JSON.stringify(yemVisibilityReviews));
+    if (changed) {
+      localStorage.setItem("categoryVisibility", JSON.stringify(yemCategoryVisibility));
+      localStorage.setItem("categoryVisibilityReviews", JSON.stringify(yemVisibilityReviews));
+      updateRemainingBudget();
+    }
+  } finally {
+    yemVisibilityReviewRunning = false;
   }
 }
 
@@ -542,7 +559,7 @@ document.getElementById("date").addEventListener("change", renderCategoryDropdow
 document.addEventListener("keydown", event => { if (event.key === "Escape") yemCloseFeatureModals(); });
 
 const yemOriginalExportData = exportData;
-exportData = function () {
+exportData = async function () {
   const payload = {
     expenses,
     categoryLimits,
@@ -582,11 +599,17 @@ exportData = function () {
   };
   const stamp = new Date().toISOString().replaceAll(":", "-").slice(0, 19);
   const suggestedName = `Expense Backup - ${stamp}.json`;
-  const requestedName = prompt("Enter a name for the backup file:", suggestedName);
+  const requestedName = await yemPrompt({
+    title: "Name your backup",
+    message: "Choose the file name for this YEM backup.",
+    inputLabel: "Backup file name",
+    defaultValue: suggestedName,
+    confirmLabel: "Download backup"
+  });
   if (requestedName === null) return;
   const trimmedName = requestedName.trim();
   if (!trimmedName) {
-    alert("Please enter a file name.");
+    yemToast("Please enter a file name.");
     return;
   }
   const filename = trimmedName.toLowerCase().endsWith(".json") ? trimmedName : `${trimmedName}.json`;
