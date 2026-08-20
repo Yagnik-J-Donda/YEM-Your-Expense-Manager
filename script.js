@@ -9,6 +9,12 @@ let deletedEntries = JSON.parse(localStorage.getItem("deletedEntries")) || [];
 const HISTORY_VIEW_MODE_KEY = "historyViewMode";
 let historyViewMode = localStorage.getItem(HISTORY_VIEW_MODE_KEY) === "timeline" ? "timeline" : "daily";
 
+const yemResetNotice = sessionStorage.getItem("yemResetNotice");
+if (yemResetNotice) {
+  sessionStorage.removeItem("yemResetNotice");
+  yemToast(yemResetNotice, { type: "success" });
+}
+
 
 
 
@@ -1644,29 +1650,118 @@ function importData(event) {
 
 
 // ==== Reset Function ====
+function resetMonthKey(value) {
+  const text = String(value || "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text.slice(0, 7);
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text.slice(0, 7);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function readResetArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch { return []; }
+}
+
+function readResetObject(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+
+function resetSelectedMonthData(monthKey) {
+  expenses = expenses.filter(item => resetMonthKey(item.actualDeductionDate || item.date) !== monthKey);
+  deletedEntries = deletedEntries.filter(item => resetMonthKey(item.actualDeductionDate || item.date) !== monthKey);
+  localStorage.setItem("expenses", JSON.stringify(expenses));
+  localStorage.setItem("deletedEntries", JSON.stringify(deletedEntries));
+
+  const incomeEntries = readResetArray("incomeEntries")
+    .filter(item => resetMonthKey(item.date) !== monthKey);
+  localStorage.setItem("incomeEntries", JSON.stringify(incomeEntries));
+
+  const occurrences = readResetObject("scheduledOccurrences");
+  Object.keys(occurrences).forEach(id => {
+    if (resetMonthKey(occurrences[id].dueDate || id.split("|")[1]) === monthKey) delete occurrences[id];
+  });
+  localStorage.setItem("scheduledOccurrences", JSON.stringify(occurrences));
+
+  const notifications = readResetArray("scheduledNotifications")
+    .filter(item => resetMonthKey(item.dueDate) !== monthKey);
+  localStorage.setItem("scheduledNotifications", JSON.stringify(notifications));
+  const dismissed = readResetArray("dismissedScheduledNotifications")
+    .filter(id => !String(id).includes(`|${monthKey}-`));
+  localStorage.setItem("dismissedScheduledNotifications", JSON.stringify(dismissed));
+
+  const snapshots = readResetObject("categoryBudgetSnapshots");
+  delete snapshots[monthKey];
+  localStorage.setItem("categoryBudgetSnapshots", JSON.stringify(snapshots));
+
+  const reviews = readResetObject("categoryVisibilityReviews");
+  Object.keys(reviews).forEach(category => {
+    if (reviews[category] === monthKey) delete reviews[category];
+  });
+  localStorage.setItem("categoryVisibilityReviews", JSON.stringify(reviews));
+
+  if (resetMonthKey(localStorage.getItem("selectedHistoryDate")) === monthKey) {
+    localStorage.removeItem("selectedHistoryDate");
+  }
+  undoStack = [];
+}
+
+function resetEveryDataRecord() {
+  [
+    "expenses", "incomeEntries", "categoryLimits", "categoryKinds", "categoryMeta",
+    "categoryProjections", "categoryBudgetModes", "categoryVisibility",
+    "categoryBudgetSnapshots", "categoryVisibilityReviews", "deletedCategories",
+    "deletedEntries", "scheduledPayments", "scheduledOccurrences",
+    "scheduledNotifications", "dismissedScheduledNotifications", "itemCategoryMappings",
+    "budgetRowOrder", "budgetSortMode", "selectedHistoryDate", "lastSavedMonth",
+    "guest_expenses", "users", "currentUser"
+  ].forEach(key => localStorage.removeItem(key));
+}
+
 async function resetAllData() {
+  const month = Number(document.getElementById("month-select").value);
+  const year = Number(document.getElementById("year-select").value);
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const monthLabel = new Date(year, month, 1).toLocaleString("en-CA", { month: "long", year: "numeric" });
+  const scope = await yemChoose({
+    title: "What would you like to reset?",
+    message: `The Remaining Budget table is currently showing ${monthLabel}. Choose whether to reset only that month or every YEM record.`,
+    choices: [
+      { label: `Reset ${monthLabel}`, value: "month" },
+      { label: "Reset entire data", value: "all", danger: true }
+    ],
+    cancelLabel: "Cancel"
+  });
+  if (!scope) return;
+
   const wantBackup = await yemConfirm({
     title: "Export a backup first?",
-    message: "Resetting removes all locally stored YEM data. You can download a backup before continuing.",
+    message: scope === "month"
+      ? `You can download a complete backup before removing the records for ${monthLabel}.`
+      : "You can download a complete backup before removing every locally stored YEM record.",
     confirmLabel: "Export backup",
     cancelLabel: "Continue without backup"
   });
   if (wantBackup) await exportData();
 
   const confirmed = await yemConfirm({
-    title: "Reset all YEM data?",
-    message: "All locally stored expenses, income and category information will be removed. This action cannot be undone without a backup.",
-    confirmLabel: "Reset all data",
+    title: scope === "month" ? `Reset ${monthLabel}?` : "Reset all YEM data?",
+    message: scope === "month"
+      ? `Expenses, income, Recycle Bin entries and scheduled-payment activity belonging to ${monthLabel} will be removed. Categories and schedules will remain available for other months.`
+      : "All locally stored expenses, income, categories, projections, schedules and Recycle Bin records will be removed. This cannot be undone without a backup.",
+    confirmLabel: scope === "month" ? `Reset ${monthLabel}` : "Reset all data",
     danger: true
   });
-  if (confirmed) {
-    localStorage.removeItem("expenses");
-    expenses = [];
-    undoStack = [];
-    updateRemainingBudget();
-    document.getElementById("history-view").innerHTML = "";
-    yemToast("All data has been reset.");
-  }
+  if (!confirmed) return;
+  if (scope === "month") resetSelectedMonthData(monthKey);
+  else resetEveryDataRecord();
+  sessionStorage.setItem("yemResetNotice", scope === "month" ? `${monthLabel} has been reset.` : "All YEM data has been reset.");
+  location.reload();
 }
 
 // ==== Undo/Redo Functions ====

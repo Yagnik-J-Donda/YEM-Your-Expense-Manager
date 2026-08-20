@@ -122,16 +122,31 @@
       }
 
       const actions = document.createElement("div");
-      actions.className = "yem-feedback-dialog-actions";
+      actions.className = `yem-feedback-dialog-actions${options.choices ? " yem-feedback-choice-actions" : ""}`;
       const cancel = document.createElement("button");
       cancel.type = "button";
       cancel.className = "yem-feedback-secondary-action";
       cancel.textContent = options.cancelLabel || "Cancel";
-      const confirm = document.createElement("button");
-      confirm.type = "button";
-      confirm.className = options.danger ? "yem-feedback-danger-action" : "yem-feedback-primary-action";
-      confirm.textContent = options.confirmLabel || "Continue";
-      actions.append(cancel, confirm);
+      const choiceButtons = [];
+      let confirm = null;
+      if (options.choices) {
+        options.choices.forEach(choice => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = choice.danger ? "yem-feedback-danger-action" : "yem-feedback-primary-action";
+          button.textContent = choice.label;
+          button.addEventListener("click", () => finish(choice.value));
+          choiceButtons.push(button);
+          actions.appendChild(button);
+        });
+        actions.appendChild(cancel);
+      } else {
+        confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.className = options.danger ? "yem-feedback-danger-action" : "yem-feedback-primary-action";
+        confirm.textContent = options.confirmLabel || "Continue";
+        actions.append(cancel, confirm);
+      }
       modal.appendChild(actions);
       overlay.replaceChildren(modal);
       overlay.hidden = false;
@@ -148,12 +163,13 @@
         if (previousFocus && previousFocus.focus) previousFocus.focus();
         resolve(value);
       };
-      const submit = () => finish(options.input ? input.value : true);
+      const cancelValue = options.choices || options.input ? null : false;
+      const submit = () => finish(options.input ? input.value : options.choices ? options.choices[0].value : true);
       const onKeyDown = event => {
         if (event.key === "Escape") {
           event.preventDefault();
-          finish(options.input ? null : false);
-        } else if (event.key === "Enter" && (!options.multiline || event.metaKey || event.ctrlKey)) {
+          finish(cancelValue);
+        } else if (event.key === "Enter" && document.activeElement.tagName !== "BUTTON" && (!options.multiline || event.metaKey || event.ctrlKey)) {
           event.preventDefault();
           submit();
         } else if (event.key === "Tab") {
@@ -166,13 +182,13 @@
         }
       };
       const onOverlayClick = event => {
-        if (event.target === overlay) finish(options.input ? null : false);
+        if (event.target === overlay) finish(cancelValue);
       };
-      cancel.addEventListener("click", () => finish(options.input ? null : false));
-      confirm.addEventListener("click", submit);
+      cancel.addEventListener("click", () => finish(cancelValue));
+      if (confirm) confirm.addEventListener("click", submit);
       overlay.addEventListener("click", onOverlayClick);
       document.addEventListener("keydown", onKeyDown, true);
-      requestAnimationFrame(() => (input || confirm).focus());
+      requestAnimationFrame(() => (input || choiceButtons[0] || confirm || cancel).focus());
     });
   }
 
@@ -185,6 +201,12 @@
     const settings = normalizeDialogOptions(options, "Enter information");
     settings.input = true;
     if (settings.defaultValue == null) settings.defaultValue = defaultValue;
+    return enqueueDialog(() => openDialog(settings));
+  };
+
+  window.yemChoose = function yemChoose(options) {
+    const settings = normalizeDialogOptions(options, "Choose an option");
+    settings.choices = Array.isArray(settings.choices) ? settings.choices : [];
     return enqueueDialog(() => openDialog(settings));
   };
 

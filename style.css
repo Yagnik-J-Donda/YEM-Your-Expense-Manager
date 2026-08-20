@@ -3616,6 +3616,8 @@ body.yem-tour-open .wrapper { padding-bottom: 55vh; }
 .yem-feedback-input:focus { outline: 3px solid rgba(63,81,181,.17); border-color: #3f51b5; }
 .yem-feedback-dialog-actions { display: flex; justify-content: flex-end; gap: 9px; }
 .yem-feedback-dialog-actions button { border-radius: 9px; padding: 10px 15px; font: inherit; font-weight: 750; cursor: pointer; }
+.yem-feedback-choice-actions { display: grid; grid-template-columns: 1fr 1fr; }
+.yem-feedback-choice-actions .yem-feedback-secondary-action { grid-column: 1 / -1; }
 .yem-feedback-secondary-action { border: 1px solid #b9c8d9; color: #30465f; background: #fff; }
 .yem-feedback-primary-action { border: 1px solid #3f51b5; color: #fff; background: #3f51b5; }
 .yem-feedback-danger-action { border: 1px solid #b42332; color: #fff; background: #b42332; }
@@ -3625,4 +3627,6 @@ body.yem-tour-open .wrapper { padding-bottom: 55vh; }
   .yem-feedback-dialog { padding: 20px; }
   .yem-feedback-dialog-actions { align-items: stretch; flex-direction: column-reverse; }
   .yem-feedback-dialog-actions button { width: 100%; }
+  .yem-feedback-choice-actions { display: grid; grid-template-columns: 1fr; }
+  .yem-feedback-choice-actions .yem-feedback-secondary-action { grid-column: auto; }
 }
