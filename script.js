@@ -1531,7 +1531,7 @@ function exportData() {
   const formattedTime = `${String(hours).padStart(2, '0')}-${minutes}-${seconds} ${ampm}`;
   const timestamp = `${formattedDate} at ${formattedTime}`;
 
-  const filename = `Expense Backup - ${timestamp}.json`;
+  const filename = `YEM - ${String(day).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${year}T${String(now.getHours()).padStart(2, "0")}-${minutes}-${seconds} - Backup.json`;
 
   const fullData = {
     expenses,

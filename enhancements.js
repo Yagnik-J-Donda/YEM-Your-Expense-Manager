@@ -597,8 +597,14 @@ exportData = async function () {
       catch { return []; }
     })()
   };
-  const stamp = new Date().toISOString().replaceAll(":", "-").slice(0, 19);
-  const suggestedName = `Expense Backup - ${stamp}.json`;
+  const now = new Date();
+  const dateStamp = [now.getDate(), now.getMonth() + 1, now.getFullYear()]
+    .map(value => String(value).padStart(2, "0"))
+    .join("-");
+  const timeStamp = [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map(value => String(value).padStart(2, "0"))
+    .join("-");
+  const suggestedName = `YEM - ${dateStamp}T${timeStamp} - Backup.json`;
   const requestedName = await yemPrompt({
     title: "Name your backup",
     message: "Choose the file name for this YEM backup.",

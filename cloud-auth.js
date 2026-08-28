@@ -2,6 +2,7 @@
   "use strict";
 
   const config = window.YEM_SUPABASE_CONFIG || {};
+  const isAuthEnabled = config.authEnabled !== false;
   const isConfigured = Boolean(config.url && config.publishableKey);
   const isLoginPage = /(?:^|\/)login\.html$/.test(window.location.pathname);
   const modes = {
@@ -259,6 +260,13 @@
 
   async function initialize() {
     bindSharedControls();
+    if (!isAuthEnabled) {
+      document.querySelectorAll(".account-menu").forEach(menu => { menu.hidden = true; });
+      document.documentElement.classList.add("auth-disabled");
+      document.documentElement.classList.remove("auth-checking");
+      if (isLoginPage) window.location.replace(safeReturnPath());
+      return;
+    }
     if (!isConfigured || !window.supabase) {
       document.documentElement.classList.remove("auth-checking");
       if (isLoginPage) showSetupMessage();
