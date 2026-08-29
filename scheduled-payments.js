@@ -218,9 +218,11 @@
     const statement = document.getElementById("approval-statement-description").value.trim();
     const notes = document.getElementById("approval-notes").value.trim();
     const postedDate = new Date(`${actualDate}T12:00:00`);
-    const cardLabel = paymentMethod === "credit-card" ? "Credit Card" : "Debit Card";
-    const baseDetails = String(plan.details || "").replace(/\s*[—-]\s*(?:Credit|Debit) Card\s*$/i, "").trim();
-    const details = [baseDetails, statement && `Statement: ${statement}`, notes, cardLabel].filter(Boolean).join(" — ");
+    const paymentLabel = paymentMethod === "credit-card"
+      ? "Credit Card"
+      : paymentMethod === "cash" ? "Cash" : "Debit Card";
+    const baseDetails = String(plan.details || "").replace(/\s*[—-]\s*(?:(?:Credit|Debit) Card|Cash)\s*$/i, "").trim();
+    const details = [baseDetails, statement && `Statement: ${statement}`, notes, paymentLabel].filter(Boolean).join(" — ");
     expenses.push({
       date: postedDate.toISOString(), category: plan.category, amount: actualAmount,
       details, transactionType: plan.transactionType, paymentMethod, paymentPattern: "regular", activeStart: "", activeEnd: "",

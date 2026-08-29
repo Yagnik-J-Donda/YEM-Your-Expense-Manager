@@ -524,7 +524,7 @@ renderDateHistory = function (dateString) {
       new Date(expense.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       expense.category,
       expense.transactionType === "credit" ? "Refund / Credit" : "Expense",
-      expense.paymentMethod === "credit-card" ? "Credit Card" : expense.paymentMethod === "debit-card" ? "Debit Card" : "Legacy entry",
+      expense.paymentMethod === "credit-card" ? "Credit Card" : expense.paymentMethod === "debit-card" ? "Debit Card" : expense.paymentMethod === "cash" ? "Cash" : "Legacy entry",
       yemMoney(yemSignedAmount(expense)),
       expense.details || "-",
       expense.paymentPattern === "spread"

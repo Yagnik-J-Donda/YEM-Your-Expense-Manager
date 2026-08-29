@@ -129,12 +129,14 @@ function saveExpenses() {
 
 // ==== Form Submission ====
 function detailsWithCardType(details, paymentMethod) {
-  const cardLabel = paymentMethod === "credit-card" ? "Credit Card" : "Debit Card";
+  const paymentLabel = paymentMethod === "credit-card"
+    ? "Credit Card"
+    : paymentMethod === "cash" ? "Cash" : "Debit Card";
   const cleaned = String(details || "")
     .trim()
-    .replace(/\s*[—-]\s*(?:Credit|Debit) Card\s*$/i, "")
+    .replace(/\s*[—-]\s*(?:(?:Credit|Debit) Card|Cash)\s*$/i, "")
     .trim();
-  return cleaned ? `${cleaned} — ${cardLabel}` : cardLabel;
+  return cleaned ? `${cleaned} — ${paymentLabel}` : paymentLabel;
 }
 
 function monthValueFromDate(value) {
