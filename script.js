@@ -1571,6 +1571,7 @@ function importData(event) {
       }
 
       let newEntries = 0;
+      let newIncomeEntries = 0;
       const existing = new Set(expenses.map(e => `${e.date}|${e.category}|${e.amount}`));
 
       for (const entry of imported.expenses) {
@@ -1617,7 +1618,10 @@ function importData(event) {
         const current = JSON.parse(localStorage.getItem(key) || "[]");
         const merged = [...current];
         imported[key].forEach(item => {
-          if (!merged.some(existingItem => existingItem.id === item.id)) merged.push(item);
+          if (!merged.some(existingItem => existingItem.id === item.id)) {
+            merged.push(item);
+            newIncomeEntries++;
+          }
         });
         localStorage.setItem(key, JSON.stringify(merged));
       });
@@ -1630,14 +1634,18 @@ function importData(event) {
       localStorage.setItem("categoryLimits", JSON.stringify(categoryLimits));
       localStorage.setItem("categoryKinds", JSON.stringify(categoryKinds));
 
-      if (newEntries > 0 || imported.categoryLimits) {
+      const totalEntriesAdded = newEntries + newIncomeEntries;
+      if (totalEntriesAdded > 0 || imported.categoryLimits) {
         renderCategoryDropdown();
         updateRemainingBudget();
         refreshHistoryView();
 
-        yemToast(`✅ Backup imported successfully. ${newEntries} new expense entries were added.`);
+        yemToast(
+          `${totalEntriesAdded} new ${totalEntriesAdded === 1 ? "entry was" : "entries were"} imported (${newEntries} expense, ${newIncomeEntries} income).`,
+          { type: "success" }
+        );
       } else {
-        yemToast("⚠️ All entries in the file already exist. No duplicates added.");
+        yemToast("0 new entries were imported. All entries in this file already exist.", { type: "info" });
       }
 
     } catch (err) {

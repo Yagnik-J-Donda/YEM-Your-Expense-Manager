@@ -610,7 +610,7 @@ exportData = async function () {
     message: "Choose the file name for this YEM backup.",
     inputLabel: "Backup file name",
     defaultValue: suggestedName,
-    confirmLabel: "Download backup"
+    confirmLabel: "Continue"
   });
   if (requestedName === null) return;
   const trimmedName = requestedName.trim();
@@ -619,11 +619,48 @@ exportData = async function () {
     return;
   }
   const filename = trimmedName.toLowerCase().endsWith(".json") ? trimmedName : `${trimmedName}.json`;
+  const destination = await yemChoose({
+    title: "Where should the backup be saved?",
+    message: "Use the normal Downloads location, or open the system save window to select a folder or create a new folder before saving.",
+    choices: [
+      { label: "Download normally", value: "downloads" },
+      { label: "Choose location / create folder", value: "choose-location" }
+    ],
+    cancelLabel: "Cancel"
+  });
+  if (!destination) return;
+
+  const contents = JSON.stringify(payload, null, 2);
+  if (destination === "choose-location" && typeof window.showSaveFilePicker === "function") {
+    try {
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: "YEM JSON backup",
+          accept: { "application/json": [".json"] }
+        }]
+      });
+      const writable = await fileHandle.createWritable();
+      await writable.write(contents);
+      await writable.close();
+      yemToast(`${filename} was saved to the selected location.`, { type: "success" });
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+      console.error(error);
+      yemToast("YEM could not save to that location. Please try the normal download option.", { type: "error" });
+    }
+    return;
+  }
+
+  if (destination === "choose-location") {
+    yemToast("Folder selection is not supported by this browser. The backup was saved using the normal Downloads behavior.", { type: "warning", duration: 6500 });
+  }
   const link = document.createElement("a");
-  link.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+  link.href = URL.createObjectURL(new Blob([contents], { type: "application/json" }));
   link.download = filename;
   link.click();
   URL.revokeObjectURL(link.href);
+  yemToast("Backup download started successfully.", { type: "success" });
 };
 
 renderCategoryDropdown();

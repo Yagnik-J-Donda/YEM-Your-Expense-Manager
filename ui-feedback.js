@@ -97,10 +97,15 @@
 
       const header = document.createElement("div");
       header.className = "yem-feedback-dialog-header";
+      const dialogClose = document.createElement("button");
+      dialogClose.type = "button";
+      dialogClose.className = "yem-feedback-dialog-close";
+      dialogClose.setAttribute("aria-label", "Close prompt");
+      dialogClose.textContent = "×";
       const title = document.createElement("h2");
       title.id = "yem-feedback-title";
       title.textContent = options.title;
-      header.appendChild(title);
+      header.append(dialogClose, title);
 
       const message = document.createElement("p");
       message.className = "yem-feedback-dialog-message";
@@ -145,7 +150,8 @@
         confirm.type = "button";
         confirm.className = options.danger ? "yem-feedback-danger-action" : "yem-feedback-primary-action";
         confirm.textContent = options.confirmLabel || "Continue";
-        actions.append(cancel, confirm);
+        if (options.notice) actions.appendChild(confirm);
+        else actions.append(cancel, confirm);
       }
       modal.appendChild(actions);
       overlay.replaceChildren(modal);
@@ -163,7 +169,7 @@
         if (previousFocus && previousFocus.focus) previousFocus.focus();
         resolve(value);
       };
-      const cancelValue = options.choices || options.input ? null : false;
+      const cancelValue = options.choices || options.input || options.notice ? null : false;
       const submit = () => finish(options.input ? input.value : options.choices ? options.choices[0].value : true);
       const onKeyDown = event => {
         if (event.key === "Escape") {
@@ -184,6 +190,7 @@
       const onOverlayClick = event => {
         if (event.target === overlay) finish(cancelValue);
       };
+      dialogClose.addEventListener("click", () => finish(cancelValue));
       cancel.addEventListener("click", () => finish(cancelValue));
       if (confirm) confirm.addEventListener("click", submit);
       overlay.addEventListener("click", onOverlayClick);
@@ -207,6 +214,13 @@
   window.yemChoose = function yemChoose(options) {
     const settings = normalizeDialogOptions(options, "Choose an option");
     settings.choices = Array.isArray(settings.choices) ? settings.choices : [];
+    return enqueueDialog(() => openDialog(settings));
+  };
+
+  window.yemNotice = function yemNotice(options) {
+    const settings = normalizeDialogOptions(options, "Done");
+    settings.notice = true;
+    if (!settings.confirmLabel) settings.confirmLabel = "Done";
     return enqueueDialog(() => openDialog(settings));
   };
 
