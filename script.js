@@ -51,11 +51,16 @@ let sortDescending = localStorage.getItem(HISTORY_MONTH_ORDER_KEY) !== "ascendin
 let categoryBeingEdited = null; // 🔄 Tracks which category is being edited
 
 // ==== Initialize Current Date ====
+function toLocalDateTimeInputValue(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 function setCurrentDateTime() {
-  const now = new Date();
-  const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString().slice(0, 16);
-  document.getElementById("date").value = localISO;
+  document.getElementById("date").value = toLocalDateTimeInputValue(new Date());
 }
 setCurrentDateTime();
 
@@ -879,7 +884,7 @@ async function editExpense(category, dateStr, oldAmount) {
   });
   if (newDetails === null) return;
 
-  const currentDateTime = new Date(expToEdit.date).toISOString().slice(0, 16);
+  const currentDateTime = toLocalDateTimeInputValue(expToEdit.date);
   const newDateTime = await yemPrompt({
     title: "Edit expense date and time",
     message: "Choose the date and time for this expense.",
@@ -904,6 +909,18 @@ async function editExpense(category, dateStr, oldAmount) {
 }
 
 // ✅ Open Edit Modal
+function populateEditExpenseCategories(selectedCategory) {
+  const select = document.getElementById("edit-expense-category");
+  select.replaceChildren();
+  Object.keys(categoryLimits)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+    .forEach(category => {
+      const option = new Option(category, category);
+      option.selected = category === selectedCategory;
+      select.add(option);
+    });
+}
+
 function openEditExpenseModal(category, dateStr, amount) {
   currentCategory = category;
 
@@ -920,9 +937,10 @@ function openEditExpenseModal(category, dateStr, amount) {
   }
 
   const exp = expenses[index];
-  document.getElementById("edit-date").value = new Date(exp.date).toISOString().slice(0, 16);
+  document.getElementById("edit-date").value = toLocalDateTimeInputValue(exp.date);
   document.getElementById("edit-amount").value = exp.amount;
   document.getElementById("edit-details").value = exp.details || "";
+  populateEditExpenseCategories(exp.category);
   document.getElementById("edit-transaction-type").value = exp.transactionType || "debit";
   document.getElementById("edit-payment-method").value = exp.paymentMethod || "debit-card";
   document.getElementById("edit-payment-pattern").value = exp.paymentPattern === "spread" ? "spread" : "regular";
@@ -1144,13 +1162,29 @@ function closeEditModal() {
 document.getElementById("edit-expense-form").addEventListener("submit", async function(e) {
   e.preventDefault();
 
+  const index = parseInt(document.getElementById("edit-index").value);
+  if (!Number.isInteger(index) || index < 0 || index >= expenses.length) {
+    yemToast("Invalid expense entry.");
+    return;
+  }
+
+  const newCategory = document.getElementById("edit-expense-category").value;
+  if (!newCategory || !Object.prototype.hasOwnProperty.call(categoryLimits, newCategory)) {
+    yemToast("Please select a valid category.");
+    return;
+  }
+
+  const originalCategory = expenses[index].category;
+  const categoryChanged = newCategory !== originalCategory;
+
   if (!await yemConfirm({
     title: "Save expense changes?",
-    message: "The updated expense details will replace the current values.",
+    message: categoryChanged
+      ? `This entry will move from "${originalCategory}" to "${newCategory}" and its other changes will be saved.`
+      : "The updated expense details will replace the current values.",
     confirmLabel: "Save changes"
   })) return;
 
-  const index = parseInt(document.getElementById("edit-index").value);
   const newDate = new Date(document.getElementById("edit-date").value);
   const newAmount = parseFloat(document.getElementById("edit-amount").value);
   const newDetails = document.getElementById("edit-details").value.trim();
@@ -1178,6 +1212,7 @@ document.getElementById("edit-expense-form").addEventListener("submit", async fu
   }
 
   expenses[index].date = newDate.toISOString();
+  expenses[index].category = newCategory;
   expenses[index].amount = newAmount;
   expenses[index].details = detailsWithCardType(newDetails, paymentMethod);
   expenses[index].transactionType = transactionType;
@@ -1187,6 +1222,7 @@ document.getElementById("edit-expense-form").addEventListener("submit", async fu
   expenses[index].activeEnd = paymentPattern === "spread" ? "" : activeEnd;
   expenses[index].allocationStartMonth = allocationStartMonth;
   expenses[index].allocationMonths = allocationMonths;
+  const movedExpense = expenses[index];
 
   saveExpenses();
 
@@ -1195,7 +1231,60 @@ document.getElementById("edit-expense-form").addEventListener("submit", async fu
 
   // ✅ THEN refresh the category box after a minimal delay
   setTimeout(() => {
+    if (categoryChanged) currentCategory = newCategory;
     viewCategoryExpenses(currentCategory);
+    if (categoryChanged) {
+      const renderMoveNavigation = displayedCategory => {
+        const navigation = document.getElementById("category-expense-navigation");
+        if (!navigation) return;
+        const openCategory = category => {
+          currentCategory = category;
+          viewCategoryExpenses(category);
+          renderMoveNavigation(category);
+        };
+        const backButton = document.createElement("button");
+        backButton.type = "button";
+        backButton.className = "category-expense-nav-button";
+        backButton.textContent = "←";
+        backButton.title = `View ${originalCategory}`;
+        backButton.setAttribute("aria-label", `View previous category: ${originalCategory}`);
+        backButton.disabled = displayedCategory === originalCategory;
+        backButton.addEventListener("click", () => openCategory(originalCategory));
+
+        const context = document.createElement("span");
+        context.className = "category-expense-nav-context";
+        context.textContent = `${originalCategory} → ${newCategory}`;
+
+        const forwardButton = document.createElement("button");
+        forwardButton.type = "button";
+        forwardButton.className = "category-expense-nav-button";
+        forwardButton.textContent = "→";
+        forwardButton.title = `View ${newCategory}`;
+        forwardButton.setAttribute("aria-label", `View moved category: ${newCategory}`);
+        forwardButton.disabled = displayedCategory === newCategory;
+        forwardButton.addEventListener("click", () => openCategory(newCategory));
+
+        navigation.replaceChildren(backButton, context, forwardButton);
+        navigation.hidden = false;
+      };
+      renderMoveNavigation(newCategory);
+      yemToast(`Expense moved to "${newCategory}" successfully.`, {
+        type: "success",
+        duration: 9000,
+        actionLabel: "Undo move",
+        onAction: () => {
+          if (!expenses.includes(movedExpense) || movedExpense.category !== newCategory) {
+            yemToast("This move can no longer be undone from the notification.", { type: "warning" });
+            return;
+          }
+          movedExpense.category = originalCategory;
+          saveExpenses();
+          currentCategory = originalCategory;
+          viewCategoryExpenses(originalCategory);
+          yemToast(`Expense moved back to "${originalCategory}".`, { type: "success" });
+        }
+      });
+    }
   }, 50);
 });
 

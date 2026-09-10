@@ -447,6 +447,11 @@ viewCategoryExpenses = function (category) {
   const { month, year } = yemSelectedMonthYear();
   const filtered = expenses.filter(expense => expense.category === category && yemExpenseActive(expense, month, year));
   document.getElementById("expense-modal-title").textContent = `Expenses for "${category}"`;
+  const navigation = document.getElementById("category-expense-navigation");
+  if (navigation) {
+    navigation.replaceChildren();
+    navigation.hidden = true;
+  }
   const list = document.getElementById("expense-list");
   list.replaceChildren();
   if (!filtered.length) {

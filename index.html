@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css?v=20260829-top-right-messages" />
+  <link rel="stylesheet" href="style.css?v=20260909-category-back-forward" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260828-auth-paused"></script>
@@ -363,6 +363,7 @@
 
 <div id="category-expense-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; border:2px solid #ccc; padding:20px; border-radius:10px; z-index:2000; width:90%; max-width:500px;">
   <h3 id="expense-modal-title">Category Expenses</h3>
+  <div id="category-expense-navigation" class="category-expense-navigation" hidden></div>
   <div id="expense-list" style="max-height:300px; overflow-y:auto; margin-top:10px; border-top:1px solid #ddd; padding-top:10px;"></div>
   <div style="text-align:right; margin-top:10px;">
     <button onclick="closeCategoryExpenseModal()">❌ Close</button>
@@ -415,6 +416,13 @@
       Details (optional):<br>
       <textarea id="edit-details" rows="4" placeholder="e.g. groceries or electricity"
         style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; resize: vertical; margin-top: 5px; box-sizing: border-box;"></textarea>
+    </label>
+
+    <label style="display: block; margin-bottom: 12px;">
+      Category (required):<br>
+      <select id="edit-expense-category" required
+        style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"></select>
+      <span class="field-help">Choose another category to move this entry without creating a duplicate.</span>
     </label>
 
     <label style="display: block; margin-bottom: 12px;">
@@ -603,9 +611,9 @@ scrollToTopBtn.addEventListener("click", () => {
 
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
-<script src="ui-feedback.js?v=20260829-consistent-messages"></script>
-<script src="script.js?v=20260909-history-navigation-v2"></script>
-<script src="enhancements.js?v=20260909-actual-spending"></script>
+<script src="ui-feedback.js?v=20260909-toast-actions"></script>
+<script src="script.js?v=20260909-category-back-forward"></script>
+<script src="enhancements.js?v=20260909-category-navigation"></script>
 <script src="scheduled-payments.js?v=20260828-cash-payment"></script>
 <script src="category-suggester.js?v=20260819-consistent-dialogs"></script>
 <script src="income.js?v=20260819-consistent-dialogs"></script>

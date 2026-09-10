@@ -59,7 +59,17 @@
     close.className = "yem-toast-close";
     close.setAttribute("aria-label", "Dismiss notification");
     close.textContent = "×";
-    toast.append(icon, text, close);
+    toast.append(icon, text);
+    let action = null;
+    if (settings.actionLabel && typeof settings.onAction === "function") {
+      toast.classList.add("has-action");
+      action = document.createElement("button");
+      action.type = "button";
+      action.className = "yem-toast-action";
+      action.textContent = settings.actionLabel;
+      toast.appendChild(action);
+    }
+    toast.appendChild(close);
     toastRegion.appendChild(toast);
 
     const dismiss = () => {
@@ -67,6 +77,12 @@
       toast.classList.add("is-leaving");
       setTimeout(() => toast.remove(), 180);
     };
+    if (action) {
+      action.addEventListener("click", () => {
+        settings.onAction();
+        dismiss();
+      });
+    }
     close.addEventListener("click", dismiss);
     const duration = Number(settings.duration) || (type === "error" ? 6500 : 4200);
     setTimeout(dismiss, duration);
