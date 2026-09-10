@@ -424,6 +424,42 @@ tr:hover {
   outline: none;
 }
 
+.history-today-icon {
+  display: inline-grid;
+  width: 1.7em;
+  height: 1.7em;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: .76em;
+  font-weight: 850;
+  line-height: 1;
+}
+
+#history-daily-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.timeline-month-sort {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.timeline-month-sort label {
+  color: #30465f;
+  font-weight: 700;
+}
+
+.timeline-month-sort .date-sort-dropdown {
+  margin: 0;
+}
+
 .history-container button.date-button {
   margin: 5px;
   padding: 5px 10px;
@@ -497,6 +533,13 @@ tr:hover {
   th,
   td {
     font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-month-sort {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

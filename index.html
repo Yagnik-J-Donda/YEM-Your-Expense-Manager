@@ -256,7 +256,7 @@
       <h2>History</h2>
       <div class="history-heading-actions">
         <div class="history-view-toggle" role="group" aria-label="History view">
-          <button type="button" id="history-daily-view" data-history-mode="daily" aria-pressed="true">📅 Daily</button>
+          <button type="button" id="history-daily-view" data-history-mode="daily" aria-pressed="true"><span id="history-today-icon" class="history-today-icon" aria-hidden="true"></span><span>Daily</span></button>
           <button type="button" id="history-timeline-view" data-history-mode="timeline" aria-pressed="false">🗂️ Timeline</button>
         </div>
         <button type="button" id="open-entry-search" class="search-entry-button">🔍 Search Entries</button>
@@ -604,8 +604,8 @@ scrollToTopBtn.addEventListener("click", () => {
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
 <script src="ui-feedback.js?v=20260829-consistent-messages"></script>
-<script src="script.js?v=20260829-consistent-messages"></script>
-<script src="enhancements.js?v=20260829-download-message"></script>
+<script src="script.js?v=20260909-history-navigation"></script>
+<script src="enhancements.js?v=20260909-actual-spending"></script>
 <script src="scheduled-payments.js?v=20260828-cash-payment"></script>
 <script src="category-suggester.js?v=20260819-consistent-dialogs"></script>
 <script src="income.js?v=20260819-consistent-dialogs"></script>

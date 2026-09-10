@@ -94,7 +94,9 @@
               <select id="new-calculation-mode" required>
                 <option value="allowance">Monthly Allowance</option>
                 <option value="projections">Sum of Projections</option>
+                <option value="actual">Actual Spending Only</option>
               </select>
+              <p class="field-help">Use Actual Spending Only for occasional categories such as trips: they stay available but contribute $0 until an expense is recorded.</p>
             </div>
 
             <label class="unlimited-category-option schedule-variable-option new-projection-only" hidden>
@@ -262,7 +264,9 @@
         <select id="edit-calculation-mode">
           <option value="allowance">Monthly Allowance</option>
           <option value="projections">Sum of Projections</option>
+          <option value="actual">Actual Spending Only</option>
         </select>
+        <p class="field-help">Actual Spending Only follows entries recorded in the selected month and has no fixed projection.</p>
       </div>
 
       <section id="edit-projections-section" class="projection-editor-section" hidden>
@@ -346,8 +350,8 @@
   
 
   <!-- <script src="script.js"></script> -->
-  <script src="ui-feedback.js?v=20260819-consistent-dialogs"></script>
-  <script src="categories.js?v=20260819-consistent-dialogs"></script>
+  <script src="ui-feedback.js?v=20260829-consistent-messages"></script>
+  <script src="categories.js?v=20260909-actual-spending"></script>
   <script src="category-suggester.js?v=20260819-consistent-dialogs"></script>
   <script src="footer.js?v=20260811-portfolio-credit"></script>
 </body>

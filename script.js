@@ -7,6 +7,7 @@ let deletedCategories = JSON.parse(localStorage.getItem("deletedCategories") || 
 let currentCategory = null;
 let deletedEntries = JSON.parse(localStorage.getItem("deletedEntries")) || [];
 const HISTORY_VIEW_MODE_KEY = "historyViewMode";
+const HISTORY_MONTH_ORDER_KEY = "historyTimelineMonthOrder";
 let historyViewMode = localStorage.getItem(HISTORY_VIEW_MODE_KEY) === "timeline" ? "timeline" : "daily";
 
 const yemResetNotice = sessionStorage.getItem("yemResetNotice");
@@ -46,7 +47,7 @@ function renderCategoryDropdown() {
 // checkAndHandleMonthChange();
 let undoStack = [];
 let lastOpenedMonthKey = null;
-let sortDescending = true;
+let sortDescending = localStorage.getItem(HISTORY_MONTH_ORDER_KEY) !== "ascending";
 let categoryBeingEdited = null; // 🔄 Tracks which category is being edited
 
 // ==== Initialize Current Date ====
@@ -92,6 +93,13 @@ document.getElementById("year-select").addEventListener("change", () => {
 document.querySelectorAll("[data-history-mode]").forEach(button => {
   button.addEventListener("click", () => setHistoryViewMode(button.dataset.historyMode));
 });
+
+const historyTodayIcon = document.getElementById("history-today-icon");
+if (historyTodayIcon) {
+  const today = new Date();
+  historyTodayIcon.textContent = String(today.getDate());
+  historyTodayIcon.title = `Today is ${today.toLocaleDateString()}`;
+}
 
 // 🔧 Added: Show selected date's entries when changed (IT IS A LISTENER)
 document.getElementById("history-date-select").addEventListener("change", (e) => {
@@ -1234,16 +1242,34 @@ function showHistory(keepOpen = false) {
     return;
   }
 
+  const monthSort = document.createElement("div");
+  monthSort.className = "timeline-month-sort";
+  const monthSortLabel = document.createElement("label");
+  monthSortLabel.htmlFor = "timeline-month-order";
+  monthSortLabel.textContent = "Month order:";
+  const monthSortSelect = document.createElement("select");
+  monthSortSelect.id = "timeline-month-order";
+  monthSortSelect.className = "date-sort-dropdown";
+  monthSortSelect.add(new Option("Newest to oldest", "descending"));
+  monthSortSelect.add(new Option("Oldest to newest", "ascending"));
+  monthSortSelect.value = sortDescending ? "descending" : "ascending";
+  monthSortSelect.addEventListener("change", () => {
+    sortDescending = monthSortSelect.value === "descending";
+    localStorage.setItem(HISTORY_MONTH_ORDER_KEY, monthSortSelect.value);
+    showHistory(true);
+  });
+  monthSort.append(monthSortLabel, monthSortSelect);
+  historyView.appendChild(monthSort);
+
   monthKeys.forEach((month) => {
     const details = document.createElement("details");
     const summary = document.createElement("summary");
     summary.textContent = month;
     details.appendChild(summary);
     if (keepOpen && month === lastOpenedMonthKey) details.open = true;
-
-    if (details.open) {
-        setTimeout(() => details.scrollIntoView({ behavior: "smooth" }), 0);
-    }
+    details.addEventListener("toggle", () => {
+      if (details.open) lastOpenedMonthKey = month;
+    });
 
 
     // Sort dropdown
@@ -1319,6 +1345,7 @@ function showDateDetails(date, entries, grouped) {
   const container = document.createElement("div");
 
 const monthKey = getMonthKeyFromDate(date);
+  lastOpenedMonthKey = monthKey;
 
   // 🔙 Back Buttons
   const backButtonsWrapper = document.createElement("div");
@@ -1397,8 +1424,6 @@ backToDatesBtn.onclick = () => {
   renderMonthDates(monthData, monthDatesContainer, "dateDesc", grouped);
   historyView.appendChild(details);
 
-  // Optional: scroll into view
-  historyView.scrollIntoView({ behavior: "smooth" });
 };
 
 
@@ -1449,8 +1474,6 @@ backToDatesBtn.onclick = () => {
   renderDateEntries(entries, "amount-desc", listContainer);
   historyView.appendChild(container);
 
-// Automatically scroll to this section
-  historyView.scrollIntoView({ behavior: "smooth" });
 }
 
 function renderDateEntries(entries, sortType, container) {

@@ -68,17 +68,19 @@ function yemDateInRange(date, startValue, endValue) {
 }
 
 function yemBudgetInfo(category, month, year) {
-  const mode = yemCategoryBudgetModes[category] === "projections" ? "projections" : "allowance";
+  const storedMode = yemCategoryBudgetModes[category];
+  const mode = storedMode === "projections" || storedMode === "actual" ? storedMode : "allowance";
   const bounds = yemMonthBounds(month, year);
   const currentMonth = yemIsCurrentMonth(month, year);
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  if (mode === "allowance") {
+  if (mode !== "projections") {
     const meta = yemCategoryMeta[category] || {};
     const active = meta.unlimited === true || (!meta.startDate && !meta.endDate) ||
       (currentMonth ? yemDateInRange(today, meta.startDate, meta.endDate) : yemRangeOverlapsMonth(meta.startDate, meta.endDate, month, year));
     const grace = currentMonth && !active && meta.endDate && yemParseDateOnly(meta.endDate) >= bounds.start && yemParseDateOnly(meta.endDate) <= bounds.end;
-    return { amount: active ? Number(categoryLimits[category]) || 0 : 0, relevant: active || grace, grace, mode, items: [] };
+    const amount = mode === "allowance" && active ? Number(categoryLimits[category]) || 0 : 0;
+    return { amount, relevant: active || grace, grace, mode, items: [] };
   }
   const allItems = Array.isArray(yemCategoryProjections[category]) ? yemCategoryProjections[category] : [];
   const activeItems = allItems.filter(item => currentMonth
@@ -267,7 +269,12 @@ function yemShowProjectionBreakdown(category) {
       scheduleVariable: true
     }];
   }
-  if (!items.length) {
+  if (budgetInfo.mode === "actual") {
+    const empty = document.createElement("p");
+    empty.textContent = "This category has no projection. Its budget contribution comes only from expenses recorded during the selected month.";
+    content.appendChild(empty);
+  }
+  if (!items.length && budgetInfo.mode !== "actual") {
     const empty = document.createElement("p");
     empty.textContent = budgetInfo.grace
       ? "All projections have ended. This category remains visible at $0 until the month ends."
@@ -358,6 +365,7 @@ updateRemainingBudget = function () {
   });
 
   const totalLimit = activeCategories.reduce((sum, category) => sum + budgetByCategory[category].amount, 0);
+  const totalUsed = activeCategories.reduce((sum, category) => sum + (spent[category] || 0), 0);
   const pairs = sortEntriesByMode(activeCategories.map(category => [category, budgetByCategory[category].amount]));
   const body = document.getElementById("budget-body");
   body.replaceChildren();
@@ -367,6 +375,8 @@ updateRemainingBudget = function () {
     const percent = limit > 0 ? (used / limit * 100).toFixed(1) : "0.0";
     const allocation = totalLimit > 0 ? (limit / totalLimit * 100).toFixed(1) : "0.0";
     const usedTotal = totalLimit > 0 ? (used / totalLimit * 100).toFixed(1) : "0.0";
+    const actualShare = totalUsed > 0 ? (used / totalUsed * 100).toFixed(1) : "0.0";
+    const actualOnly = budgetByCategory[category].mode === "actual";
     const row = document.createElement("tr");
     row.dataset.category = category;
 
@@ -387,7 +397,7 @@ updateRemainingBudget = function () {
 
     const remainingCell = document.createElement("td");
     remainingCell.className = "budget-remaining-value";
-    remainingCell.textContent = yemMoney(remaining);
+    remainingCell.textContent = actualOnly ? "Not allocated" : yemMoney(remaining);
     const projectedCell = document.createElement("td");
     const projectedButton = document.createElement("button");
     projectedButton.className = "table-link-button projection-link";
@@ -396,7 +406,7 @@ updateRemainingBudget = function () {
     projectedButton.addEventListener("click", () => yemShowProjectionBreakdown(category));
     projectedCell.appendChild(projectedButton);
 
-    [categoryCell, spentCell, remainingCell, projectedCell, `${percent}%`, `${usedTotal}% / ${allocation}%`]
+    [categoryCell, spentCell, remainingCell, projectedCell, actualOnly ? "Actual only" : `${percent}%`, actualOnly ? `${actualShare}% actual / 0.0% allocated` : `${usedTotal}% / ${allocation}%`]
       .forEach(value => {
         if (value instanceof HTMLElement) row.appendChild(value);
         else { const cell = document.createElement("td"); cell.textContent = value; row.appendChild(cell); }
@@ -404,7 +414,6 @@ updateRemainingBudget = function () {
     body.appendChild(row);
   });
 
-  const totalUsed = activeCategories.reduce((sum, category) => sum + (spent[category] || 0), 0);
   const remaining = totalLimit - totalUsed;
   const percent = totalLimit > 0 ? (totalUsed / totalLimit * 100).toFixed(1) : "0.0";
   const selectedKey = `${year}-${String(month + 1).padStart(2, "0")}`;

@@ -53,7 +53,8 @@ function validateRange(startDate, endDate) {
 }
 
 function normalizedMode(category) {
-  return categoryBudgetModes[category] === "projections" ? "projections" : "allowance";
+  const mode = categoryBudgetModes[category];
+  return mode === "projections" || mode === "actual" ? mode : "allowance";
 }
 
 function syncDurationInputs(checkbox, startInput, endInput) {
@@ -71,20 +72,26 @@ function syncNewSchedule(resetFixedDefault = false) {
 
 function syncNewMode() {
   const projectionsMode = newModeInput.value === "projections";
+  const actualMode = newModeInput.value === "actual";
   document.querySelectorAll(".new-projection-only").forEach(element => { element.hidden = !projectionsMode; });
-  document.getElementById("new-allowance-group").hidden = false;
+  document.getElementById("new-allowance-group").hidden = actualMode;
   document.getElementById("new-amount-label").textContent = projectionsMode ? "Initial Projection Amount ($) *" : "Monthly Allowance ($) *";
-  newLimitInput.required = true;
+  newLimitInput.required = !actualMode;
   document.getElementById("new-projection-name").required = projectionsMode;
+  if (actualMode) newKindInput.value = "Variable";
+  newKindInput.disabled = actualMode;
   syncNewSchedule();
 }
 
 function syncEditMode() {
   const projectionsMode = editModeInput.value === "projections";
+  const actualMode = editModeInput.value === "actual";
   document.getElementById("edit-projections-section").hidden = !projectionsMode;
   document.getElementById("edit-allowance-duration").hidden = projectionsMode;
-  editLimitInput.closest(".category-form-group").hidden = projectionsMode;
-  editLimitInput.required = !projectionsMode;
+  editLimitInput.closest(".category-form-group").hidden = projectionsMode || actualMode;
+  editLimitInput.required = !projectionsMode && !actualMode;
+  if (actualMode) editKindInput.value = "Variable";
+  editKindInput.disabled = actualMode;
   if (projectionsMode && !projectionList.children.length) addProjectionRow();
 }
 
@@ -126,9 +133,9 @@ function snapshotCategoryHistory(category) {
     const mode = normalizedMode(category);
     let relevant = false;
     let amount = 0;
-    if (mode === "allowance") {
+    if (mode !== "projections") {
       relevant = meta.unlimited === true || (!meta.startDate && !meta.endDate) || rangeOverlapsMonth(meta.startDate, meta.endDate, year, month);
-      amount = relevant ? Number(categoryLimits[category]) || 0 : 0;
+      amount = mode === "allowance" && relevant ? Number(categoryLimits[category]) || 0 : 0;
     } else {
       const active = projections.filter(item => rangeOverlapsMonth(item.startDate, item.endDate, year, month));
       relevant = active.length > 0;
@@ -211,9 +218,11 @@ function renderCategoryManagementList() {
     const heading = document.createElement("h3");
     heading.textContent = name;
     const modeLine = document.createElement("p");
-    modeLine.textContent = mode === "projections" ? `Sum of ${projections.length} projection${projections.length === 1 ? "" : "s"}` : "Monthly allowance";
+    modeLine.textContent = mode === "projections"
+      ? `Sum of ${projections.length} projection${projections.length === 1 ? "" : "s"}`
+      : mode === "actual" ? "Actual spending only" : "Monthly allowance";
     const amount = document.createElement("p");
-    amount.textContent = `Configured amount: $${amountValue.toFixed(2)}`;
+    amount.textContent = mode === "actual" ? "Projection: None · follows recorded entries" : `Configured amount: $${amountValue.toFixed(2)}`;
     const visibility = document.createElement("p");
     visibility.textContent = categoryVisibility[name] === "hidden" ? "Budget table: Hidden by user" : "Budget table: Visible when applicable";
     content.append(heading, modeLine, amount, visibility);
@@ -375,9 +384,11 @@ categoryForm.addEventListener("submit", event => {
   window.tempNewType = { name, kind, mode, allowance, projection, startDate, endDate, unlimited };
   const details = document.getElementById("confirm-type-details");
   details.replaceChildren();
-  const lines = [`Name: ${name}`, `Type: ${kind}`, `Calculation: ${mode === "allowance" ? "Monthly Allowance" : "Sum of Projections"}`];
+  const calculationLabel = mode === "allowance" ? "Monthly Allowance" : mode === "projections" ? "Sum of Projections" : "Actual Spending Only";
+  const lines = [`Name: ${name}`, `Type: ${kind}`, `Calculation: ${calculationLabel}`];
   if (mode === "allowance") lines.push(`Monthly allowance: $${allowance.toFixed(2)}`);
-  else lines.push(`Initial projection: ${projection.name} — $${projection.amount.toFixed(2)} — ${scheduleLabel(projection)}`);
+  else if (mode === "projections") lines.push(`Initial projection: ${projection.name} — $${projection.amount.toFixed(2)} — ${scheduleLabel(projection)}`);
+  else lines.push("Budget contribution: Recorded expenses only");
   lines.push(unlimited ? "Plan active: Unlimited" : `Plan active: ${startDate || "No start limit"} to ${endDate || "No expiry"}`);
   lines.forEach(line => {
     const span = document.createElement("span");
@@ -393,8 +404,8 @@ confirmAddButton.addEventListener("click", () => {
   if (!item) return;
   categoryKinds[item.name] = item.kind;
   categoryBudgetModes[item.name] = item.mode;
-  categoryLimits[item.name] = item.mode === "allowance" ? item.allowance : item.projection.amount;
-  categoryMeta[item.name] = item.mode === "allowance"
+  categoryLimits[item.name] = item.mode === "allowance" ? item.allowance : item.mode === "projections" ? item.projection.amount : 0;
+  categoryMeta[item.name] = item.mode !== "projections"
     ? { startDate: item.startDate, endDate: item.endDate, unlimited: item.unlimited }
     : { unlimited: true, startDate: "", endDate: "" };
   categoryProjections[item.name] = item.mode === "projections" ? [item.projection] : [];
@@ -430,13 +441,17 @@ editCategoryForm.addEventListener("submit", async event => {
     yemToast("Please enter a valid allowance and active period.");
     return;
   }
+  if (mode === "actual" && !validateRange(startDate, endDate)) {
+    yemToast("Please enter a valid active period.");
+    return;
+  }
   if (mode === "projections" && !validProjections(projections)) {
     yemToast("Each projection needs a name, valid amount, schedule and valid active period.");
     return;
   }
   snapshotCategoryHistory(oldName);
   const wasHidden = categoryVisibility[oldName] === "hidden";
-  if (wasHidden && (mode === "allowance" ? allowance > 0 : projections.some(item => item.amount > 0))) {
+  if (wasHidden && (mode === "actual" || (mode === "allowance" ? allowance > 0 : projections.some(item => item.amount > 0)))) {
     if (await yemConfirm({
       title: "Show category again?",
       message: `"${newName}" was hidden from the budget table. Show it again with these active budget settings?`,
@@ -445,8 +460,8 @@ editCategoryForm.addEventListener("submit", async event => {
   }
   categoryKinds[newName] = kind;
   categoryBudgetModes[newName] = mode;
-  categoryLimits[newName] = mode === "allowance" ? allowance : projections.reduce((sum, item) => sum + item.amount, 0);
-  categoryMeta[newName] = mode === "allowance" ? { startDate, endDate, unlimited } : { unlimited: true, startDate: "", endDate: "" };
+  categoryLimits[newName] = mode === "allowance" ? allowance : mode === "projections" ? projections.reduce((sum, item) => sum + item.amount, 0) : 0;
+  categoryMeta[newName] = mode !== "projections" ? { startDate, endDate, unlimited } : { unlimited: true, startDate: "", endDate: "" };
   categoryProjections[newName] = projections;
   categoryVisibility[newName] = categoryVisibility[oldName] || "visible";
   if (newName !== oldName) {
