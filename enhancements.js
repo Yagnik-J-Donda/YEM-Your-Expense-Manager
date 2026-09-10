@@ -222,7 +222,8 @@ function yemRenderExpenseCard(expense, options = {}) {
   const heading = document.createElement("h3");
   heading.textContent = `${expense.transactionType === "credit" ? "Refund / Credit" : "Expense"}: ${yemMoney(yemSignedAmount(expense))}`;
   const meta = document.createElement("p");
-  meta.textContent = `${expense.category || "Uncategorized"} · ${new Date(expense.date).toLocaleString()}`;
+  const trip = (typeof trips !== "undefined" ? trips : []).find(item => item.id === expense.tripId);
+  meta.textContent = `${expense.category || "Uncategorized"}${trip ? ` · Trip: ${trip.name}` : ""} · ${new Date(expense.date).toLocaleString()}`;
   const notes = document.createElement("p");
   notes.textContent = expense.details || "No notes";
   const duration = document.createElement("p");
@@ -486,6 +487,7 @@ function yemRunSearch() {
     expense.paymentPattern || "regular",
     expense.allocationStartMonth,
     expense.allocationMonths,
+    (typeof trips !== "undefined" ? trips : []).find(item => item.id === expense.tripId)?.name,
     categoryKinds[expense.category] || "Variable"
   ].map(value => String(value || "").toLowerCase());
   const matches = expenses.filter(expense => searchableValues(expense).some(value => value.includes(query)));
@@ -525,7 +527,7 @@ renderDateHistory = function (dateString) {
   const table = document.createElement("table");
   const head = document.createElement("thead");
   const headRow = document.createElement("tr");
-  ["Time", "Category", "Type", "Paid With", "Amount", "Details", "Budget Treatment"].forEach(label => {
+  ["Time", "Category", "Trip", "Type", "Paid With", "Amount", "Details", "Budget Treatment"].forEach(label => {
     const cell = document.createElement("th");
     cell.textContent = label;
     headRow.appendChild(cell);
@@ -537,6 +539,7 @@ renderDateHistory = function (dateString) {
     const values = [
       new Date(expense.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       expense.category,
+      (typeof trips !== "undefined" ? trips : []).find(item => item.id === expense.tripId)?.name || "—",
       expense.transactionType === "credit" ? "Refund / Credit" : "Expense",
       expense.paymentMethod === "credit-card" ? "Credit Card" : expense.paymentMethod === "debit-card" ? "Debit Card" : expense.paymentMethod === "cash" ? "Cash" : "Legacy entry",
       yemMoney(yemSignedAmount(expense)),
@@ -587,6 +590,10 @@ exportData = async function () {
     itemCategoryMappings: (() => {
       try { return JSON.parse(localStorage.getItem("itemCategoryMappings") || "{}"); }
       catch { return {}; }
+    })(),
+    trips: (() => {
+      try { return JSON.parse(localStorage.getItem("trips") || "[]"); }
+      catch { return []; }
     })(),
     deletedCategories,
     deletedEntries,

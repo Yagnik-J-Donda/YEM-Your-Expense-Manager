@@ -2,6 +2,7 @@
 let expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
 let categoryLimits = JSON.parse(localStorage.getItem("categoryLimits") || "{}");
 let categoryKinds = JSON.parse(localStorage.getItem("categoryKinds") || "{}");
+let trips = JSON.parse(localStorage.getItem("trips") || "[]");
 
 let deletedCategories = JSON.parse(localStorage.getItem("deletedCategories") || "[]");
 let currentCategory = null;
@@ -40,6 +41,23 @@ function renderCategoryDropdown() {
     select.appendChild(option);
   });
 }
+
+function renderTripDropdown(selectId, selectedTripId = "") {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.replaceChildren(new Option("Not part of a trip", ""));
+  [...trips]
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" }))
+    .forEach(trip => {
+      const option = new Option(trip.name, trip.id);
+      option.selected = trip.id === selectedTripId;
+      select.add(option);
+    });
+}
+function tripNameFor(expense) {
+  return trips.find(trip => trip.id === expense.tripId)?.name || "—";
+}
+renderTripDropdown("trip-id");
 // renderCategoryDropdown();
 
 
@@ -213,6 +231,7 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
 
   const date = document.getElementById("date").value;
   const category = document.getElementById("category").value;
+  const tripId = document.getElementById("trip-id").value;
   const amount = parseFloat(document.getElementById("amount").value);
   const transactionType = document.getElementById("transaction-type").value;
   const paymentMethod = document.getElementById("payment-method").value;
@@ -245,6 +264,7 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
       details,
       transactionType,
       paymentMethod,
+      tripId,
       activeStart,
       activeEnd
     });
@@ -275,6 +295,7 @@ document.getElementById("expense-form").addEventListener("submit", (e) => {
     details,
     transactionType,
     paymentMethod,
+    tripId,
     paymentPattern,
     activeStart: paymentPattern === "spread" ? "" : activeStart,
     activeEnd: paymentPattern === "spread" ? "" : activeEnd,
@@ -376,6 +397,7 @@ function renderDateHistory(dateStr) {
       <tr>
         <th>Time</th>
         <th>Category</th>
+        <th>Trip</th>
         <th>Amount ($)</th>
         <th>Details</th>
       </tr>
@@ -400,6 +422,7 @@ function renderDateHistory(dateStr) {
     row.innerHTML = `
       <td>${time}</td>
       <td>${entry.category}</td>
+      <td>${tripNameFor(entry)}</td>
       <td>$${entry.amount.toFixed(2)}</td>
       <td><span class="details-text">${preview}</span></td>
     `;
@@ -941,6 +964,7 @@ function openEditExpenseModal(category, dateStr, amount) {
   document.getElementById("edit-amount").value = exp.amount;
   document.getElementById("edit-details").value = exp.details || "";
   populateEditExpenseCategories(exp.category);
+  renderTripDropdown("edit-expense-trip", exp.tripId || "");
   document.getElementById("edit-transaction-type").value = exp.transactionType || "debit";
   document.getElementById("edit-payment-method").value = exp.paymentMethod || "debit-card";
   document.getElementById("edit-payment-pattern").value = exp.paymentPattern === "spread" ? "spread" : "regular";
@@ -1169,6 +1193,7 @@ document.getElementById("edit-expense-form").addEventListener("submit", async fu
   }
 
   const newCategory = document.getElementById("edit-expense-category").value;
+  const newTripId = document.getElementById("edit-expense-trip").value;
   if (!newCategory || !Object.prototype.hasOwnProperty.call(categoryLimits, newCategory)) {
     yemToast("Please select a valid category.");
     return;
@@ -1213,6 +1238,7 @@ document.getElementById("edit-expense-form").addEventListener("submit", async fu
 
   expenses[index].date = newDate.toISOString();
   expenses[index].category = newCategory;
+  expenses[index].tripId = newTripId;
   expenses[index].amount = newAmount;
   expenses[index].details = detailsWithCardType(newDetails, paymentMethod);
   expenses[index].transactionType = transactionType;
@@ -1593,6 +1619,7 @@ function renderDateEntries(entries, sortType, container) {
       <tr>
         <th>Time</th>
         <th>Category</th>
+        <th>Trip</th>
         <th>Amount ($)</th>
         <th>Details</th>
       </tr>
@@ -1617,8 +1644,12 @@ function renderDateEntries(entries, sortType, container) {
     const detailsCell = document.createElement("td");
     detailsCell.textContent = entry.details || '-';
 
+    const tripCell = document.createElement("td");
+    tripCell.textContent = tripNameFor(entry);
+
     row.appendChild(timeCell);
     row.appendChild(catCell);
+    row.appendChild(tripCell);
     row.appendChild(amountCell);
     row.appendChild(detailsCell);
 
@@ -1653,6 +1684,7 @@ function exportData() {
     expenses,
     categoryLimits,
     categoryKinds,
+    trips: JSON.parse(localStorage.getItem("trips") || "[]"),
     scheduledPayments: JSON.parse(localStorage.getItem("scheduledPayments") || "[]"),
     scheduledOccurrences: JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}"),
     scheduledNotifications: JSON.parse(localStorage.getItem("scheduledNotifications") || "[]"),
@@ -1739,6 +1771,15 @@ function importData(event) {
         });
         localStorage.setItem(key, JSON.stringify(merged));
       });
+      if (Array.isArray(imported.trips)) {
+        const mergedTrips = [...trips];
+        imported.trips.forEach(trip => {
+          if (trip && trip.id && !mergedTrips.some(existingTrip => existingTrip.id === trip.id)) mergedTrips.push(trip);
+        });
+        trips = mergedTrips;
+        localStorage.setItem("trips", JSON.stringify(trips));
+        renderTripDropdown("trip-id");
+      }
       if (imported.scheduledOccurrences && typeof imported.scheduledOccurrences === "object") {
         const current = JSON.parse(localStorage.getItem("scheduledOccurrences") || "{}");
         localStorage.setItem("scheduledOccurrences", JSON.stringify({ ...current, ...imported.scheduledOccurrences }));
@@ -1841,7 +1882,7 @@ function resetEveryDataRecord() {
     "categoryProjections", "categoryBudgetModes", "categoryVisibility",
     "categoryBudgetSnapshots", "categoryVisibilityReviews", "deletedCategories",
     "deletedEntries", "scheduledPayments", "scheduledOccurrences",
-    "scheduledNotifications", "dismissedScheduledNotifications", "itemCategoryMappings",
+    "scheduledNotifications", "dismissedScheduledNotifications", "itemCategoryMappings", "trips",
     "budgetRowOrder", "budgetSortMode", "selectedHistoryDate", "lastSavedMonth",
     "guest_expenses", "users", "currentUser"
   ].forEach(key => localStorage.removeItem(key));

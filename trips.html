@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-checking">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trips | YEM</title>
+  <link rel="stylesheet" href="style.css?v=20260910-trips" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=20260828-auth-paused"></script>
+  <script src="cloud-auth.js?v=20260828-auth-paused" defer></script>
+</head>
+<body class="trips-body">
+  <header class="yem-navbar secondary-navbar">
+    <a href="index.html" class="yem-logo" aria-label="YEM home"><strong>YEM</strong><span>Your Expense Manager</span></a>
+    <nav class="secondary-page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="categories.html">Categories</a>
+      <a href="trips.html" class="active" aria-current="page">Trips</a>
+      <a href="recycle-bin.html">Recycle Bin</a>
+      <details class="account-menu">
+        <summary><span class="account-avatar" aria-hidden="true">Y</span><span class="account-identity"><span class="account-username" data-auth-username>Account</span><span class="account-email" data-auth-email></span></span></summary>
+        <div class="account-menu-panel"><div class="account-menu-caption">Account</div><button type="button" data-auth-signout><span aria-hidden="true">↪</span> Sign out</button></div>
+      </details>
+    </nav>
+  </header>
+
+  <main class="trips-page">
+    <header class="trips-page-header">
+      <div>
+        <p class="category-page-label">YEM</p>
+        <h1>✈️ Trips &amp; Spending Groups</h1>
+        <p>Combine expenses from different dates, months, categories and payment methods without changing monthly reports.</p>
+      </div>
+    </header>
+
+    <section class="trip-form-card">
+      <div class="section-heading">
+        <div><h2 id="trip-form-title">Create a Trip</h2><p>Expenses may be linked even when they were paid before or after the travel dates.</p></div>
+      </div>
+      <form id="trip-form" class="trip-form">
+        <input type="hidden" id="trip-edit-id" />
+        <label>Trip name *<input id="trip-name" type="text" required placeholder="For example: Vancouver 2026" /></label>
+        <label>Starts *<input id="trip-start" type="date" required /></label>
+        <label>Ends *<input id="trip-end" type="date" required /></label>
+        <label>Optional trip budget<input id="trip-budget" type="number" min="0" step="0.01" placeholder="No fixed budget" /></label>
+        <label class="trip-notes-field">Notes<textarea id="trip-notes" rows="3" placeholder="Purpose, travellers or other useful details"></textarea></label>
+        <div class="trip-form-actions">
+          <button type="button" id="cancel-trip-edit" class="secondary-category-button" hidden>Cancel edit</button>
+          <button type="submit" class="save-category-button">Save Trip</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="trips-list-section">
+      <div class="section-heading">
+        <div><h2>Your Trips</h2><p>Totals include every expense explicitly linked to each trip.</p></div>
+      </div>
+      <div id="trips-empty" class="history-empty-state" hidden>No trips created yet.</div>
+      <div id="trips-list" class="trips-list"></div>
+    </section>
+  </main>
+
+  <footer class="footer shared-page-footer">
+    © <span data-current-year></span> <strong>YEM – Your Expense Manager</strong>. All rights reserved.<br />
+    Crafted with ❤️ to simplify your personal finances by
+    <a href="https://yagnik-j-donda.github.io/portfolio/" target="_blank" rel="noopener noreferrer">Yagnik Donda</a>.
+  </footer>
+  <script src="ui-feedback.js?v=20260909-toast-actions"></script>
+  <script src="trips.js?v=20260910-trips"></script>
+  <script src="footer.js?v=20260811-portfolio-credit"></script>
+</body>
+</html>

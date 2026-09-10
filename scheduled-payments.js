@@ -184,6 +184,7 @@
       details: data.details,
       transactionType: data.transactionType || "debit",
       paymentMethod: data.paymentMethod || "debit-card",
+      tripId: data.tripId || "",
       scheduledDay: selected.getDate(),
       activeStart: start,
       activeEnd: data.activeEnd || "",
@@ -226,6 +227,7 @@
     expenses.push({
       date: postedDate.toISOString(), category: plan.category, amount: actualAmount,
       details, transactionType: plan.transactionType, paymentMethod, paymentPattern: "regular", activeStart: "", activeEnd: "",
+      tripId: plan.tripId || "",
       expectedDueDate: notification.dueDate, actualDeductionDate: actualDate,
       expectedAmount: Number(plan.expectedAmount), statementDescription: statement,
       scheduledPaymentId: plan.id, scheduledOccurrenceId: notification.occurrenceId, status: "posted"

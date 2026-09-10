@@ -20,6 +20,7 @@
   <nav id="sidebar" class="yem-header-nav" aria-label="Main navigation">
     <a href="index.html" class="active">Home</a>
     <a href="categories.html" data-tour="categories">Categories</a>
+    <a href="trips.html">Trips</a>
     <a href="recycle-bin.html">Recycle Bin</a>
     <details class="account-menu">
       <summary><span class="account-avatar" aria-hidden="true">Y</span><span class="account-identity"><span class="account-username" data-auth-username>Account</span><span class="account-email" data-auth-email></span></span></summary>
@@ -83,6 +84,12 @@
   <select id="category" required>
     <option value="">--Select Category--</option>
   </select>
+
+  <label for="trip-id">Trip or Spending Group (optional)</label>
+  <select id="trip-id">
+    <option value="">Not part of a trip</option>
+  </select>
+  <p class="field-help">The expense still counts in its payment month and category. Selecting a trip also includes it in that trip’s complete total.</p>
 
   <!-- 🕒 Date & Time -->
   <label for="date">Select Date & Time *</label>
@@ -426,6 +433,12 @@
     </label>
 
     <label style="display: block; margin-bottom: 12px;">
+      Trip or Spending Group (optional):<br>
+      <select id="edit-expense-trip"
+        style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"></select>
+    </label>
+
+    <label style="display: block; margin-bottom: 12px;">
       Entry type:<br>
       <select id="edit-transaction-type" style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;">
         <option value="debit">Expense</option>
@@ -612,9 +625,9 @@ scrollToTopBtn.addEventListener("click", () => {
 
 <!-- ✅ Local JS script (no Firebase, no type="module") -->
 <script src="ui-feedback.js?v=20260909-toast-actions"></script>
-<script src="script.js?v=20260909-category-back-forward"></script>
+<script src="script.js?v=20260910-trips"></script>
 <script src="enhancements.js?v=20260909-category-navigation"></script>
-<script src="scheduled-payments.js?v=20260828-cash-payment"></script>
+<script src="scheduled-payments.js?v=20260910-trips"></script>
 <script src="category-suggester.js?v=20260819-consistent-dialogs"></script>
 <script src="income.js?v=20260819-consistent-dialogs"></script>
 <script src="entry-dialogs.js?v=20260819-consistent-dialogs"></script>

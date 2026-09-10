@@ -599,6 +599,190 @@ tr:hover {
   white-space: nowrap;
 }
 
+/* ==== Trips and cross-month spending groups ==== */
+.trips-body {
+  min-height: 100vh;
+  color: #1d2939;
+  background: #f4f7fb;
+}
+
+.trips-page {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 60px;
+}
+
+.trips-page-header,
+.trip-form-card,
+.trips-list-section {
+  border: 1px solid #e1e7ef;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, .07);
+}
+
+.trips-page-header {
+  margin-bottom: 22px;
+  padding: 28px;
+}
+
+.trips-page-header h1,
+.trip-form-card h2,
+.trips-list-section h2 {
+  margin: 4px 0 7px;
+  color: #17345e;
+}
+
+.trips-page-header p,
+.trip-form-card .section-heading p,
+.trips-list-section .section-heading p {
+  margin-bottom: 0;
+  color: #667085;
+}
+
+.trip-form-card,
+.trips-list-section {
+  margin-bottom: 22px;
+  padding: 24px;
+}
+
+.trip-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.trip-form label {
+  display: grid;
+  gap: 7px;
+  color: #30465f;
+  font-weight: 700;
+}
+
+.trip-form input,
+.trip-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #bdcad8;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: #20324a;
+  background: #fff;
+  font: inherit;
+}
+
+.trip-form input:focus,
+.trip-form textarea:focus {
+  outline: 3px solid rgba(63, 81, 181, .16);
+  border-color: #3f51b5;
+}
+
+.trip-notes-field,
+.trip-form-actions {
+  grid-column: 1 / -1;
+}
+
+.trip-form-actions,
+.trip-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.trips-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.trip-card {
+  padding: 20px;
+  border: 1px solid #dfe6ef;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+.trip-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.trip-card-header h3 { margin: 0; color: #17345e; }
+.trip-card-header p { margin: 5px 0 0; color: #667085; }
+
+.trip-status {
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.trip-status-active { color: #176b4d; background: #dff6ea; }
+.trip-status-upcoming { color: #7a4d00; background: #fff0c7; }
+.trip-status-completed { color: #475467; background: #e9edf2; }
+
+.trip-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.trip-metrics > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #eef2fb;
+}
+
+.trip-metrics span { color: #667085; font-size: .78rem; font-weight: 700; }
+.trip-metrics strong { color: #203b66; }
+
+.trip-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.trip-breakdown {
+  padding: 13px;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.trip-breakdown h4 { margin: 0 0 9px; color: #30465f; }
+.trip-breakdown p { margin: 0; color: #667085; }
+.trip-breakdown dl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 10px; margin: 0; }
+.trip-breakdown dt { overflow: hidden; color: #53657a; text-overflow: ellipsis; white-space: nowrap; }
+.trip-breakdown dd { margin: 0; color: #203b66; font-weight: 750; }
+
+.trip-entry-details { margin-top: 14px; }
+.trip-entry-details summary { color: #3f51b5; font-weight: 750; cursor: pointer; }
+.trip-entry-details .table-wrapper { margin-top: 10px; }
+.trip-notes { margin: 14px 0; color: #667085; }
+
+@media (max-width: 760px) {
+  .trip-form,
+  .trip-breakdown-grid { grid-template-columns: 1fr; }
+  .trip-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trip-notes-field,
+  .trip-form-actions { grid-column: auto; }
+}
+
+@media (max-width: 480px) {
+  .trips-page { width: min(100% - 20px, 1120px); padding-top: 18px; }
+  .trips-page-header,
+  .trip-form-card,
+  .trips-list-section { padding: 17px; }
+  .trip-metrics { grid-template-columns: 1fr; }
+  .trip-card-header { flex-direction: column; }
+}
+
 /* ==== Mobile Responsive: Input Fields Block ==== */
 @media (max-width: 480px) {
   #expense-form {
