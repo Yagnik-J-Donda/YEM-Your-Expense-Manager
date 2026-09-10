@@ -1217,12 +1217,14 @@ function closeCategoryExpenseModal() {
 // ==== History View Grouped by Month and Date ====
 function showHistory(keepOpen = false) {
   const grouped = {};
+  const monthSortValues = {};
   expenses.forEach((entry) => {
     const dateObj = new Date(entry.date);
     const year = dateObj.getFullYear();
     const month = dateObj.toLocaleString("default", { month: "long" });
     const dateOnly = dateObj.toLocaleDateString('en-CA');  // Format: YYYY-MM-DD
     const monthKey = `${month} ${year}`;
+    monthSortValues[monthKey] = new Date(year, dateObj.getMonth(), 1).getTime();
     if (!grouped[monthKey]) grouped[monthKey] = {};
     if (!grouped[monthKey][dateOnly]) grouped[monthKey][dateOnly] = [];
     grouped[monthKey][dateOnly].push(entry);
@@ -1232,9 +1234,9 @@ function showHistory(keepOpen = false) {
   historyView.innerHTML = "";
 
   const monthKeys = Object.keys(grouped).sort((a, b) => {
-    const dateA = new Date(`${a} 01`);
-    const dateB = new Date(`${b} 01`);
-    return sortDescending ? dateB - dateA : dateA - dateB;
+    return sortDescending
+      ? monthSortValues[b] - monthSortValues[a]
+      : monthSortValues[a] - monthSortValues[b];
   });
 
   if (monthKeys.length === 0) {
